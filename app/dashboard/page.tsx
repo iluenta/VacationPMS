@@ -1,17 +1,21 @@
 "use client"
 
 import { useAuth } from "@/lib/auth-context"
+import { useCurrentTenant } from "@/lib/hooks/use-current-tenant"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Calendar, Users, TrendingUp } from "lucide-react"
 
 export default function DashboardPage() {
-  const { profile, tenant, loading, user } = useAuth()
+  const { profile, loading, user } = useAuth()
+  const { currentTenant, isAdmin, hasTenant } = useCurrentTenant()
 
   // Debug logs
   console.log("[Dashboard] Loading:", loading)
   console.log("[Dashboard] User:", user)
   console.log("[Dashboard] Profile:", profile)
-  console.log("[Dashboard] Tenant:", tenant)
+  console.log("[Dashboard] CurrentTenant:", currentTenant)
+  console.log("[Dashboard] IsAdmin:", isAdmin)
+  console.log("[Dashboard] HasTenant:", hasTenant)
 
   if (loading) {
     return (
@@ -43,7 +47,14 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bienvenido, {profile?.full_name || "Usuario"}</h1>
-          <p className="text-muted-foreground">{tenant ? `Gestionando ${tenant.name}` : "Panel de administración"}</p>
+          <p className="text-muted-foreground">
+            {hasTenant 
+              ? `Gestionando ${currentTenant?.name}` 
+              : isAdmin 
+                ? "Panel de administración - Selecciona un tenant" 
+                : "Panel de administración"
+            }
+          </p>
         </div>
 
         {/* Stats Cards */}

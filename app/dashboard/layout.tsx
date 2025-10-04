@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useAuth } from "@/lib/auth-context"
+import { useCurrentTenant } from "@/lib/hooks/use-current-tenant"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,13 +14,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Building2, User, LogOut, Settings, Key } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Building2, User, LogOut, Settings, Key, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, profile, tenant, loading, signOut } = useAuth()
+  const { user, profile, selectedTenant, availableTenants, loading, signOut, setSelectedTenant } = useAuth()
+  const { currentTenant, isAdmin } = useCurrentTenant()
   const router = useRouter()
 
   useEffect(() => {
@@ -37,6 +40,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // TODO: Implementar cambio de contraseña
     console.log("Cambiar contraseña")
   }
+
+  const handleTenantChange = (tenantId: string) => {
+    const tenant = availableTenants.find(t => t.id === tenantId)
+    if (tenant) {
+      setSelectedTenant(tenant)
+      console.log("[Dashboard] Tenant changed to:", tenant.name)
+    }
+  }
+
+  // currentTenant ya viene del hook useCurrentTenant
 
   const getInitials = (name: string | null) => {
     if (!name) return "U"
@@ -73,13 +86,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Building2 className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">VacationPMS</span>
             </Link>
-            {tenant && (
-              <div className="hidden md:flex items-center gap-2 rounded-md bg-muted px-3 py-1.5">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{tenant.name}</span>
+            {currentTenant && (
+              <div className="hidden md:flex items-center gap-2">
+                {isAdmin ? (
+                  <Select value={selectedTenant?.id || ""} onValueChange={handleTenantChange}>
+                    <SelectTrigger className="w-[200px] h-8 bg-muted">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="Seleccionar tenant" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTenants.map((tenant) => (
+                        <SelectItem key={tenant.id} value={tenant.id}>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            <span>{tenant.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{currentTenant.name}</span>
+                  </div>
+                )}
               </div>
             )}
-            {profile.is_admin && (
+            {isAdmin && (
               <div className="hidden md:flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5">
                 <span className="text-sm font-medium text-primary">Administrador</span>
               </div>
@@ -107,11 +143,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <p className="text-xs leading-none text-muted-foreground">
                       {profile.email}
                     </p>
-                    {tenant && (
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {tenant.name}
-                      </p>
-                    )}
+                           {currentTenant && (
+                             <p className="text-xs leading-none text-muted-foreground">
+                               {currentTenant.name}
+                             </p>
+                           )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

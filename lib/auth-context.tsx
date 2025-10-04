@@ -25,10 +25,14 @@ interface AuthContextType {
   user: User | null
   profile: UserProfile | null
   tenant: Tenant | null
+  selectedTenant: Tenant | null // Tenant seleccionado por el admin
+  availableTenants: Tenant[] // Todos los tenants disponibles para admins
   loading: boolean
   isEmailConfirmed: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+  setSelectedTenant: (tenant: Tenant | null) => void
+  fetchAvailableTenants: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -37,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [tenant, setTenant] = useState<Tenant | null>(null)
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
+  const [availableTenants, setAvailableTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
 
   // Computed property for email confirmation status
@@ -46,23 +52,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[AuthContext] Fetching profile for user:", userId)
     const supabase = createClient()
 
-    // Fetch user profile
-    const { data: profileData, error: profileError } = await supabase.from("users").select("*").eq("id", userId).single()
+    try {
+      // Fetch user profile with better error handling
+      const { data, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single()
 
-    if (profileError) {
-      console.error("[AuthContext] Error fetching profile:", profileError)
-      return
-    }
+      if (profileError) {
+        console.error("[AuthContext] Error fetching profile:", profileError)
+        console.error("[AuthContext] Error details:", {
+          code: profileError.code,
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint
+        })
+        
+        // Si el usuario no existe en public.users, esto podría ser un problema de trigger
+        if (profileError.code === 'PGRST116') {
+          console.log("[AuthContext] User not found in public.users, this might be a trigger issue")
+          // No establecer el perfil, pero no fallar completamente
+          return
+        }
+        return
+      }
 
-    console.log("[AuthContext] Profile data:", profileData)
+      // Validate that we have valid data
+      if (!data || typeof data !== 'object') {
+        console.error("[AuthContext] Invalid profile data received:", data)
+        return
+      }
 
-    if (profileData) {
-      setProfile(profileData)
+      console.log("[AuthContext] Profile data:", data)
+      setProfile(data)
 
       // Fetch tenant if user has one
-      if (profileData.tenant_id) {
-        console.log("[AuthContext] Fetching tenant:", profileData.tenant_id)
-        const { data: tenantData, error: tenantError } = await supabase.from("tenants").select("*").eq("id", profileData.tenant_id).single()
+      if (data.tenant_id) {
+        console.log("[AuthContext] Fetching tenant:", data.tenant_id)
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("*")
+          .eq("id", data.tenant_id)
+          .single()
 
         if (tenantError) {
           console.error("[AuthContext] Error fetching tenant:", tenantError)
@@ -73,6 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
+    } catch (error) {
+      console.error("[AuthContext] Unexpected error fetching profile:", error)
+      // Don't throw, just log and continue
     }
   }
 
@@ -82,39 +117,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const fetchAvailableTenants = async () => {
+    console.log("[AuthContext] Fetching available tenants for admin")
+    const supabase = createClient()
+
+    const { data: tenantsData, error: tenantsError } = await supabase
+      .from("tenants")
+      .select("*")
+      .order("name")
+
+    if (tenantsError) {
+      console.error("[AuthContext] Error fetching tenants:", tenantsError)
+      return
+    }
+
+    console.log("[AuthContext] Available tenants:", tenantsData)
+    setAvailableTenants(tenantsData || [])
+
+    // Si es admin y no hay tenant seleccionado, seleccionar el primero
+    if (profile?.is_admin && !selectedTenant && tenantsData && tenantsData.length > 0) {
+      setSelectedTenant(tenantsData[0])
+    }
+  }
+
   useEffect(() => {
     console.log("[AuthContext] Initializing auth context")
     const supabase = createClient()
 
-    // Get initial session
+    // Get initial session with better error handling
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log("[AuthContext] Initial session:", session)
       if (error) {
         console.error("[AuthContext] Session error:", error)
+        setLoading(false)
+        return
       }
       setUser(session?.user ?? null)
       if (session?.user) {
-        fetchProfile(session.user.id)
+        fetchProfile(session.user.id).catch((err) => {
+          console.error("[AuthContext] Error fetching initial profile:", err)
+          setLoading(false)
+        })
+      } else {
+        setLoading(false)
       }
+    }).catch((err) => {
+      console.error("[AuthContext] Unexpected error getting session:", err)
       setLoading(false)
     })
 
-    // Listen for auth changes
+    // Listen for auth changes with better error handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
-        setTenant(null)
+      try {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          fetchProfile(session.user.id).catch((err) => {
+            console.error("[AuthContext] Error fetching profile on auth change:", err)
+          })
+        } else {
+          setProfile(null)
+          setTenant(null)
+          setSelectedTenant(null)
+          setAvailableTenants([])
+        }
+        setLoading(false)
+      } catch (err) {
+        console.error("[AuthContext] Error in auth state change:", err)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Cargar tenants disponibles cuando el perfil cambie y el usuario sea admin
+  useEffect(() => {
+    if (profile?.is_admin) {
+      fetchAvailableTenants()
+    }
+  }, [profile?.is_admin])
 
   const signOut = async () => {
     const supabase = createClient()
@@ -122,10 +205,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setProfile(null)
     setTenant(null)
+    setSelectedTenant(null)
+    setAvailableTenants([])
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, tenant, loading, isEmailConfirmed, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      tenant, 
+      selectedTenant,
+      availableTenants,
+      loading, 
+      isEmailConfirmed, 
+      signOut, 
+      refreshProfile,
+      setSelectedTenant,
+      fetchAvailableTenants
+    }}>
       {children}
     </AuthContext.Provider>
   )

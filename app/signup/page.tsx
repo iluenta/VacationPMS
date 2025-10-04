@@ -8,65 +8,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
-
-interface Tenant {
-  id: string
-  name: string
-  slug: string
-}
+import { useState } from "react"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [fullName, setFullName] = useState("")
-  const [tenantId, setTenantId] = useState("")
-  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [organizationName, setOrganizationName] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    // Fetch available tenants
-    const fetchTenants = async () => {
-      try {
-        const supabase = createClient()
-        console.log("[v0] Fetching tenants...")
-        
-        const { data, error } = await supabase.from("tenants").select("*").order("name")
-
-        if (error) {
-          console.error("[v0] Error fetching tenants:", error)
-          console.error("[v0] Error details:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-          })
-          setError(
-            `Error al cargar organizaciones: ${error.message}. Verifica que los scripts de base de datos se hayan ejecutado correctamente.`,
-          )
-        } else if (data && data.length > 0) {
-          console.log("[v0] Tenants loaded:", data)
-          setTenants(data)
-          setError(null) // Clear any previous errors
-        } else {
-          console.log("[v0] No tenants found")
-          setError("No hay organizaciones disponibles. Por favor, ejecuta los scripts de base de datos.")
-        }
-      } catch (err) {
-        console.error("[v0] Unexpected error fetching tenants:", err)
-        setError("Error inesperado al cargar las organizaciones. Verifica la conexión con la base de datos.")
-      }
-    }
-    fetchTenants()
-  }, [])
+  // Ya no necesitamos cargar tenants, cada usuario crea su propia organización
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,13 +38,37 @@ export default function SignupPage() {
       return
     }
 
-    if (!tenantId) {
-      setError("Por favor selecciona una organización")
+    if (!organizationName.trim()) {
+      setError("Por favor, ingresa el nombre de tu organización")
+      setIsLoading(false)
+      return
+    }
+
+    if (organizationName.length > 15) {
+      setError("El nombre de la organización no puede tener más de 15 caracteres")
       setIsLoading(false)
       return
     }
 
     try {
+      // Crear el tenant primero usando la función con ID correlativo
+      const slug = organizationName.toLowerCase().replace(/\s+/g, '')
+      
+      const { data: tenantData, error: tenantError } = await supabase
+        .rpc('create_tenant_with_correlative_id', {
+          tenant_name: organizationName.trim(),
+          tenant_slug: slug
+        })
+        .single()
+
+      if (tenantError) {
+        console.error("[Signup] Error creating tenant:", tenantError)
+        throw new Error(`Error al crear la organización: ${tenantError.message}`)
+      }
+
+      console.log("[Signup] Tenant created:", tenantData)
+
+      // Crear el usuario con el tenant_id
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -94,14 +76,16 @@ export default function SignupPage() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: fullName,
-            tenant_id: tenantId,
+            tenant_id: tenantData.id,
             is_admin: false,
           },
         },
       })
+      
       if (error) throw error
       router.push("/signup-success")
     } catch (error: unknown) {
+      console.error("[Signup] Error:", error)
       setError(error instanceof Error ? error.message : "Error al crear la cuenta")
     } finally {
       setIsLoading(false)
@@ -113,26 +97,50 @@ export default function SignupPage() {
     setIsGoogleLoading(true)
     setError(null)
 
-    if (!tenantId) {
-      setError("Por favor selecciona una organización antes de continuar con Google")
+    if (!organizationName.trim()) {
+      setError("Por favor, ingresa el nombre de tu organización antes de continuar con Google")
+      setIsGoogleLoading(false)
+      return
+    }
+
+    if (organizationName.length > 15) {
+      setError("El nombre de la organización no puede tener más de 15 caracteres")
       setIsGoogleLoading(false)
       return
     }
 
     try {
-      console.log("[v0] Starting Google OAuth with tenant:", tenantId)
+      // Crear el tenant primero usando la función con ID correlativo
+      const slug = organizationName.toLowerCase().replace(/\s+/g, '')
+      
+      const { data: tenantData, error: tenantError } = await supabase
+        .rpc('create_tenant_with_correlative_id', {
+          tenant_name: organizationName.trim(),
+          tenant_slug: slug
+        })
+        .single()
+
+      if (tenantError) {
+        console.error("[GoogleSignup] Error creating tenant:", tenantError)
+        throw new Error(`Error al crear la organización: ${tenantError.message}`)
+      }
+
+      console.log("[GoogleSignup] Tenant created:", tenantData)
+
+      // Iniciar OAuth con el tenant_id
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?tenant_id=${tenantData.id}`,
           queryParams: {
-            tenant_id: tenantId,
+            access_type: "offline",
+            prompt: "consent",
           },
         },
       })
       if (error) throw error
     } catch (error: unknown) {
-      console.error("[v0] Google OAuth error:", error)
+      console.error("[GoogleSignup] Error:", error)
       setError(error instanceof Error ? error.message : "Error al registrarse con Google")
       setIsGoogleLoading(false)
     }
@@ -200,19 +208,20 @@ export default function SignupPage() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="tenant">Organización</Label>
-                      <Select value={tenantId} onValueChange={setTenantId} disabled={isLoading || isGoogleLoading}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona tu organización" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tenants.map((tenant) => (
-                            <SelectItem key={tenant.id} value={tenant.id}>
-                              {tenant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="organization">Organización</Label>
+                      <Input
+                        id="organization"
+                        type="text"
+                        placeholder="Mi Empresa"
+                        maxLength={15}
+                        required
+                        value={organizationName}
+                        onChange={(e) => setOrganizationName(e.target.value)}
+                        disabled={isLoading || isGoogleLoading}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Máximo 15 caracteres. Se creará una nueva organización para tu cuenta.
+                      </p>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="password">Contraseña</Label>
