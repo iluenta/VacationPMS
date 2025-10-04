@@ -70,6 +70,7 @@ export async function GET(request: Request) {
       }
 
       console.log("[v0] Authentication successful for user:", authResult?.user?.email)
+      console.log("[v0] Email confirmed:", !!authResult?.user?.email_confirmed_at)
 
       // Update user metadata if tenant_id is provided
       if (tenantId && authResult?.user) {
@@ -87,8 +88,14 @@ export async function GET(request: Request) {
         }
       }
 
-      // Redirect to dashboard after successful authentication
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // Redirect based on email confirmation status
+      if (authResult?.user?.email_confirmed_at) {
+        console.log("[v0] Email confirmed, redirecting to dashboard")
+        return NextResponse.redirect(`${origin}/dashboard`)
+      } else {
+        console.log("[v0] Email not confirmed, redirecting to verify-email page")
+        return NextResponse.redirect(`${origin}/verify-email`)
+      }
     } catch (error) {
       console.error("[v0] Unexpected error in auth callback:", error)
       return NextResponse.redirect(`${origin}/auth/error?message=${encodeURIComponent('Error inesperado durante la autenticación')}`)

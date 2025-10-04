@@ -28,12 +28,21 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      
       if (error) throw error
-      router.push("/dashboard")
+      
+      // Check if email is confirmed
+      if (data.user && !data.user.email_confirmed_at) {
+        // User is authenticated but email not confirmed
+        router.push("/verify-email")
+      } else {
+        // User is authenticated and email is confirmed
+        router.push("/dashboard")
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Error al iniciar sesión")
     } finally {

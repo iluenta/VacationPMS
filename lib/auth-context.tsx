@@ -26,6 +26,7 @@ interface AuthContextType {
   profile: UserProfile | null
   tenant: Tenant | null
   loading: boolean
+  isEmailConfirmed: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -37,6 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Computed property for email confirmation status
+  const isEmailConfirmed = user?.email_confirmed_at !== null
 
   const fetchProfile = async (userId: string) => {
     console.log("[AuthContext] Fetching profile for user:", userId)
@@ -121,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, tenant, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, tenant, loading, isEmailConfirmed, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )
