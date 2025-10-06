@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isEmailConfirmed = user?.email_confirmed_at !== null
 
   const fetchProfile = async (userId: string) => {
-    console.log("[AuthContext] Fetching profile for user:", userId)
     const supabase = createClient()
 
     try {
@@ -71,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Si el usuario no existe en public.users, esto podría ser un problema de trigger
         if (profileError.code === 'PGRST116') {
-          console.log("[AuthContext] User not found in public.users, this might be a trigger issue")
           // No establecer el perfil, pero no fallar completamente
           return
         }
@@ -84,12 +82,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      console.log("[AuthContext] Profile data:", data)
       setProfile(data)
 
       // Fetch tenant if user has one
       if (data.tenant_id) {
-        console.log("[AuthContext] Fetching tenant:", data.tenant_id)
         const { data: tenantData, error: tenantError } = await supabase
           .from("tenants")
           .select("*")
@@ -98,11 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (tenantError) {
           console.error("[AuthContext] Error fetching tenant:", tenantError)
-        } else {
-          console.log("[AuthContext] Tenant data:", tenantData)
-          if (tenantData) {
-            setTenant(tenantData)
-          }
+        } else if (tenantData) {
+          setTenant(tenantData)
         }
       }
     } catch (error) {
@@ -118,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const fetchAvailableTenants = async () => {
-    console.log("[AuthContext] Fetching available tenants for admin")
     const supabase = createClient()
 
     const { data: tenantsData, error: tenantsError } = await supabase
@@ -131,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    console.log("[AuthContext] Available tenants:", tenantsData)
     setAvailableTenants(tenantsData || [])
 
     // Si es admin y no hay tenant seleccionado, seleccionar el primero
@@ -141,12 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    console.log("[AuthContext] Initializing auth context")
     const supabase = createClient()
 
     // Get initial session with better error handling
     supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log("[AuthContext] Initial session:", session)
       if (error) {
         console.error("[AuthContext] Session error:", error)
         setLoading(false)

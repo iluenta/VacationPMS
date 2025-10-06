@@ -8,9 +8,6 @@ export async function GET(request: Request) {
   const tenantId = requestUrl.searchParams.get("tenant_id")
   const origin = requestUrl.origin
 
-  console.log("[v0] Auth callback - code:", !!code, "type:", type, "tenant_id:", tenantId)
-  console.log("[v0] Full URL:", requestUrl.toString())
-
   if (code) {
     try {
       const supabase = await createClient()
@@ -21,7 +18,6 @@ export async function GET(request: Request) {
 
       // Method 1: Try OTP verification first (for email confirmation)
       if (type === "signup" || type === "recovery" || type === "email_change") {
-        console.log("[v0] Attempting OTP verification for type:", type)
         const result = await supabase.auth.verifyOtp({
           token_hash: code,
           type: type as any,
@@ -32,25 +28,20 @@ export async function GET(request: Request) {
       
       // Method 2: If no type specified, try to detect from code format
       if (!type && code) {
-        console.log("[v0] No type specified, trying to detect from code format")
-        
         // Try different OTP types based on common patterns
         const otpTypes = ['signup', 'recovery', 'email_change'] as const
         
         for (const otpType of otpTypes) {
-          console.log(`[v0] Trying OTP verification for type: ${otpType}`)
           const result = await supabase.auth.verifyOtp({
             token_hash: code,
             type: otpType,
           })
           
           if (!result.error) {
-            console.log(`[v0] Success with OTP type: ${otpType}`)
             authResult = result.data
             authError = null
             break
           } else {
-            console.log(`[v0] Failed with OTP type: ${otpType}, error:`, result.error.message)
             authError = result.error
           }
         }
@@ -58,19 +49,15 @@ export async function GET(request: Request) {
       
       // Method 3: If OTP fails, try PKCE exchange
       if (authError) {
-        console.log("[v0] OTP failed, trying PKCE exchange")
         const result = await supabase.auth.exchangeCodeForSession(code)
         authResult = result.data
         authError = result.error
       }
 
       if (authError) {
-        console.error("[v0] All authentication methods failed:", authError)
+        console.error("[v0] Authentication failed:", authError)
         return NextResponse.redirect(`${origin}/auth/error?message=${encodeURIComponent(authError.message)}&error_code=${authError.status}`)
       }
-
-      console.log("[v0] Authentication successful for user:", authResult?.user?.email)
-      console.log("[v0] Email confirmed:", !!authResult?.user?.email_confirmed_at)
 
       // Update user metadata if tenant_id is provided
       if (tenantId && authResult?.user) {
@@ -83,17 +70,13 @@ export async function GET(request: Request) {
 
         if (updateError) {
           console.error("[v0] Error updating user metadata:", updateError)
-        } else {
-          console.log("[v0] User metadata updated with tenant_id:", tenantId)
         }
       }
 
       // Redirect based on email confirmation status
       if (authResult?.user?.email_confirmed_at) {
-        console.log("[v0] Email confirmed, redirecting to dashboard")
         return NextResponse.redirect(`${origin}/dashboard`)
       } else {
-        console.log("[v0] Email not confirmed, redirecting to verify-email page")
         return NextResponse.redirect(`${origin}/verify-email`)
       }
     } catch (error) {

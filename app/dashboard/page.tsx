@@ -9,14 +9,6 @@ export default function DashboardPage() {
   const { profile, loading, user } = useAuth()
   const { currentTenant, isAdmin, hasTenant } = useCurrentTenant()
 
-  // Debug logs
-  console.log("[Dashboard] Loading:", loading)
-  console.log("[Dashboard] User:", user)
-  console.log("[Dashboard] Profile:", profile)
-  console.log("[Dashboard] CurrentTenant:", currentTenant)
-  console.log("[Dashboard] IsAdmin:", isAdmin)
-  console.log("[Dashboard] HasTenant:", hasTenant)
-
   if (loading) {
     return (
       <div className="container py-8">

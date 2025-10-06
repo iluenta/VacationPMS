@@ -15,15 +15,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Building2, User, LogOut, Settings, Key, ChevronDown } from "lucide-react"
+import { Building2, User, LogOut, Settings, Key, ChevronDown, Cog, LayoutDashboard, Home } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useEffect } from "react"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, selectedTenant, availableTenants, loading, signOut, setSelectedTenant } = useAuth()
   const { currentTenant, isAdmin } = useCurrentTenant()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!loading && !user) {
@@ -36,16 +37,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
-  const handleChangePassword = () => {
-    // TODO: Implementar cambio de contraseña
-    console.log("Cambiar contraseña")
-  }
-
   const handleTenantChange = (tenantId: string) => {
     const tenant = availableTenants.find(t => t.id === tenantId)
     if (tenant) {
       setSelectedTenant(tenant)
-      console.log("[Dashboard] Tenant changed to:", tenant.name)
     }
   }
 
@@ -153,17 +148,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Mi Perfil</span>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configuración de Usuario</span>
                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleChangePassword}>
-                  <Key className="mr-2 h-4 w-4" />
-                  <span>Cambiar Contraseña</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configuración</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
@@ -175,6 +162,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
+
+      {/* Navigation Menu */}
+      <nav className="border-b bg-background">
+        <div className="container flex h-12 items-center gap-4">
+          <Link
+            href="/dashboard"
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              pathname === "/dashboard"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Home className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
+          <Link
+            href="/dashboard/configurations"
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              pathname === "/dashboard/configurations"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Cog className="h-4 w-4" />
+            <span>Configuraciones</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="flex-1">{children}</main>

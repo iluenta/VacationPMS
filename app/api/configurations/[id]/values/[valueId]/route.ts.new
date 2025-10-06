@@ -1,0 +1,323 @@
+import { createClient } from "@/lib/supabase/server"
+import { NextRequest, NextResponse } from "next/server"
+
+// GET /api/configurations/[id]/values/[valueId] - Obtener valor específico
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string; valueId: string } }
+) {
+  try {
+    // Aseguramos que params esté completamente resuelto
+    const resolvedParams = await Promise.resolve(params);
+    const { id, valueId } = resolvedParams;
+    
+    if (!id || !valueId) {
+      return NextResponse.json(
+        { success: false, error: "ID de configuración o valor no proporcionado" },
+        { status: 400 }
+      );
+    }
+    
+    const supabase = await createClient()
+    
+    // Verificar autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "No autorizado" },
+        { status: 401 }
+      )
+    }
+
+    // Obtener perfil del usuario
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("tenant_id, is_admin")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil de usuario no encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Verificar que el tipo de configuración existe y el usuario tiene permisos
+    let query = supabase
+      .from("configuration_types")
+      .select("id, tenant_id")
+      .eq("id", id);
+
+    if (!profile.is_admin) {
+      query = query.eq("tenant_id", profile.tenant_id);
+    }
+
+    const { data: config, error: configError } = await query.single()
+
+    if (configError || !config) {
+      return NextResponse.json(
+        { success: false, error: "Tipo de configuración no encontrado o no tienes permiso" },
+        { status: 404 }
+      )
+    }
+
+    // Obtener valor específico
+    const { data: value, error } = await supabase
+      .from("configuration_values")
+      .select(`
+        id,
+        value,
+        label,
+        description,
+        icon,
+        color,
+        is_active,
+        sort_order,
+        created_at,
+        updated_at
+      `)
+      .eq("id", valueId)
+      .eq("configuration_type_id", id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { success: false, error: "Valor de configuración no encontrado" },
+          { status: 404 }
+        )
+      }
+      console.error("[API] Error fetching configuration value:", error)
+      return NextResponse.json(
+        { success: false, error: "Error al obtener valor de configuración" },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      data: value
+    })
+
+  } catch (error) {
+    console.error("[API] Unexpected error in GET /api/configurations/[id]/values/[valueId]:", error)
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    )
+  }
+}
+
+// PUT /api/configurations/[id]/values/[valueId] - Actualizar valor de configuración
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string; valueId: string } }
+) {
+  try {
+    // Aseguramos que params esté completamente resuelto
+    const resolvedParams = await Promise.resolve(params);
+    const { id, valueId } = resolvedParams;
+    
+    if (!id || !valueId) {
+      return NextResponse.json(
+        { success: false, error: "ID de configuración o valor no proporcionado" },
+        { status: 400 }
+      );
+    }
+    
+    const supabase = await createClient()
+    
+    // Verificar autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "No autorizado" },
+        { status: 401 }
+      )
+    }
+
+    // Obtener perfil del usuario
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("tenant_id, is_admin")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil de usuario no encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Verificar que el tipo de configuración existe y el usuario tiene permisos
+    let query = supabase
+      .from("configuration_types")
+      .select("id, tenant_id")
+      .eq("id", id);
+
+    if (!profile.is_admin) {
+      query = query.eq("tenant_id", profile.tenant_id);
+    }
+
+    const { data: config, error: configError } = await query.single()
+
+    if (configError || !config) {
+      return NextResponse.json(
+        { success: false, error: "Tipo de configuración no encontrado o no tienes permiso" },
+        { status: 404 }
+      )
+    }
+
+    // Obtener datos del cuerpo de la solicitud
+    const { value, label, description, icon, color, sort_order, is_active } = await request.json()
+
+    // Validar campos requeridos
+    if (!value || !label) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: "Los campos 'value' y 'label' son requeridos"
+        },
+        { status: 400 }
+      )
+    }
+
+    // Actualizar el valor de configuración
+    const { data: updatedValue, error: updateError } = await supabase
+      .from("configuration_values")
+      .update({
+        value: value.trim(),
+        label: label.trim(),
+        description: description?.trim() || null,
+        icon: icon?.trim() || null,
+        color: color || null,
+        sort_order: sort_order || 0,
+        is_active: is_active !== undefined ? is_active : true,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", valueId)
+      .eq("configuration_type_id", id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error("[API] Error updating configuration value:", updateError)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Error al actualizar el valor de configuración",
+          details: updateError.message 
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      data: updatedValue 
+    })
+
+  } catch (error) {
+    console.error("[API] Unexpected error in PUT /api/configurations/[id]/values/[valueId]:", error)
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE /api/configurations/[id]/values/[valueId] - Eliminar valor de configuración
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string; valueId: string } }
+) {
+  try {
+    // Aseguramos que params esté completamente resuelto
+    const resolvedParams = await Promise.resolve(params);
+    const { id, valueId } = resolvedParams;
+    
+    if (!id || !valueId) {
+      return NextResponse.json(
+        { success: false, error: "ID de configuración o valor no proporcionado" },
+        { status: 400 }
+      );
+    }
+    
+    const supabase = await createClient()
+    
+    // Verificar autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "No autorizado" },
+        { status: 401 }
+      )
+    }
+
+    // Obtener perfil del usuario
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("tenant_id, is_admin")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil de usuario no encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Verificar que el tipo de configuración existe y el usuario tiene permisos
+    let query = supabase
+      .from("configuration_types")
+      .select("id, tenant_id")
+      .eq("id", id);
+
+    if (!profile.is_admin) {
+      query = query.eq("tenant_id", profile.tenant_id);
+    }
+
+    const { data: config, error: configError } = await query.single()
+
+    if (configError || !config) {
+      return NextResponse.json(
+        { success: false, error: "Tipo de configuración no encontrado o no tienes permiso" },
+        { status: 404 }
+      )
+    }
+
+    // Eliminar el valor de configuración
+    const { error: deleteError } = await supabase
+      .from("configuration_values")
+      .delete()
+      .eq("id", valueId)
+      .eq("configuration_type_id", id)
+
+    if (deleteError) {
+      console.error("[API] Error deleting configuration value:", deleteError)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Error al eliminar el valor de configuración",
+          details: deleteError.message 
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: "Valor de configuración eliminado correctamente"
+    })
+
+  } catch (error) {
+    console.error("[API] Unexpected error in DELETE /api/configurations/[id]/values/[valueId]:", error)
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor" },
+      { status: 500 }
+    )
+  }
+}
