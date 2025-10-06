@@ -13,28 +13,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener perfil del usuario para determinar tenant
-    
-    // Intentar obtener perfil real de la base de datos
     const { data: profile, error: profileError } = await supabase
       .from("users")
       .select("tenant_id, is_admin")
       .eq("id", user.id)
       .single()
 
-    let finalProfile
     if (profileError || !profile) {
-      // Fallback a datos hardcodeados si no se puede obtener el perfil
-      finalProfile = {
-        tenant_id: '00000001-0000-4000-8000-000000000000',
-        is_admin: false
-      }
-    } else {
-      finalProfile = profile
+      console.error("[API] Error fetching user profile:", profileError)
+      return NextResponse.json({ 
+        error: "No se pudo obtener el perfil del usuario. Contacte al administrador." 
+      }, { status: 500 })
+    }
+
+    // Validar que el usuario tenga un tenant asignado (excepto admins)
+    if (!profile.tenant_id && !profile.is_admin) {
+      return NextResponse.json({ 
+        error: "Usuario sin tenant asignado. Contacte al administrador." 
+      }, { status: 403 })
     }
 
     // Si es admin, obtener el tenant del header o query param
-    let tenantId = finalProfile.tenant_id
-    if (finalProfile.is_admin) {
+    let tenantId = profile.tenant_id
+    if (profile.is_admin) {
       const selectedTenantId = request.headers.get('x-tenant-id') || 
                                request.nextUrl.searchParams.get('tenant_id')
       if (selectedTenantId) {
@@ -63,39 +64,10 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("[API] Error fetching configurations:", error)
-      // Si hay error, devolver datos hardcodeados como fallback
-      const fallbackConfigurations = [
-        {
-          id: '1',
-          name: 'Tipo de Usuario',
-          description: 'Define los diferentes tipos de usuarios en el sistema',
-          icon: 'users',
-          color: '#3B82F6',
-          is_active: true,
-          sort_order: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          tenant_id: '00000001-0000-4000-8000-000000000000'
-        },
-        {
-          id: '2',
-          name: 'Tipo de Reserva',
-          description: 'Define los diferentes tipos de reservas',
-          icon: 'calendar',
-          color: '#10B981',
-          is_active: true,
-          sort_order: 2,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          tenant_id: '00000001-0000-4000-8000-000000000000'
-        }
-      ]
-      
       return NextResponse.json({ 
-        success: true, 
-        data: fallbackConfigurations,
-        count: fallbackConfigurations.length
-      })
+        error: "Error al obtener configuraciones de la base de datos",
+        details: error.message
+      }, { status: 500 })
     }
 
     return NextResponse.json({ 
@@ -121,22 +93,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    // Intentar obtener perfil real de la base de datos
+    // Obtener perfil del usuario
     const { data: profile, error: profileError } = await supabase
       .from("users")
       .select("tenant_id, is_admin")
       .eq("id", user.id)
       .single()
 
-    let finalProfile
     if (profileError || !profile) {
-      // Fallback a datos hardcodeados si no se puede obtener el perfil
-      finalProfile = {
-        tenant_id: '00000001-0000-4000-8000-000000000000',
-        is_admin: false
-      }
-    } else {
-      finalProfile = profile
+      console.error("[API] Error fetching user profile:", profileError)
+      return NextResponse.json({ 
+        error: "No se pudo obtener el perfil del usuario. Contacte al administrador." 
+      }, { status: 500 })
+    }
+
+    // Validar que el usuario tenga un tenant asignado (excepto admins)
+    if (!profile.tenant_id && !profile.is_admin) {
+      return NextResponse.json({ 
+        error: "Usuario sin tenant asignado. Contacte al administrador." 
+      }, { status: 403 })
     }
 
     // Parsear datos del request
@@ -157,8 +132,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Si es admin, obtener el tenant del header o query param
-    let tenant_id = finalProfile.tenant_id
-    if (finalProfile.is_admin) {
+    let tenant_id = profile.tenant_id
+    if (profile.is_admin) {
       const selectedTenantId = request.headers.get('x-tenant-id') || 
                                request.nextUrl.searchParams.get('tenant_id')
       if (selectedTenantId) {
