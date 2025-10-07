@@ -1,5 +1,16 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { 
+  GetConfigurationsSchema, 
+  CreateConfigurationTypeSchema,
+  validateQueryParams,
+  validateRequestBody,
+  validateHeaders,
+  TenantHeaderSchema,
+  createValidationErrorResponse
+} from "@/lib/validations/configurations"
+import { auditLogger } from "@/lib/logging/logger"
+import { getClientInfo } from "@/lib/logging/edge-logger"
 
 // GET /api/configurations - Listar tipos de configuración
 export async function GET(request: NextRequest) {
@@ -33,18 +44,41 @@ export async function GET(request: NextRequest) {
       }, { status: 403 })
     }
 
+    // Validar query parameters
+    let queryParams
+    try {
+      queryParams = validateQueryParams(GetConfigurationsSchema, request.nextUrl.searchParams)
+    } catch (error) {
+      const clientInfo = getClientInfo(request)
+      return NextResponse.json(createValidationErrorResponse(error as any, {
+        ip: clientInfo.ip,
+        userAgent: clientInfo.userAgent,
+        endpoint: '/api/configurations',
+        payload: Object.fromEntries(request.nextUrl.searchParams.entries())
+      }), { status: 400 })
+    }
+
+    // Validar headers de tenant (para admins)
+    let tenantHeaders
+    try {
+      tenantHeaders = validateHeaders(TenantHeaderSchema, {
+        'x-tenant-id': request.headers.get('x-tenant-id') || undefined
+      })
+    } catch (error) {
+      return NextResponse.json(createValidationErrorResponse(error as any), { status: 400 })
+    }
+
     // Si es admin, obtener el tenant del header o query param
     let tenantId = profile.tenant_id
     if (profile.is_admin) {
-      const selectedTenantId = request.headers.get('x-tenant-id') || 
-                               request.nextUrl.searchParams.get('tenant_id')
+      const selectedTenantId = tenantHeaders['x-tenant-id'] || queryParams.tenant_id
       if (selectedTenantId) {
         tenantId = selectedTenantId
       }
     }
 
     // Construir query base para configuraciones
-    const { data: configurations, error } = await supabase
+    let query = supabase
       .from("configuration_types")
       .select(`
         id,
@@ -59,8 +93,17 @@ export async function GET(request: NextRequest) {
         tenant_id
       `)
       .eq("tenant_id", tenantId)
+
+    // Aplicar filtros de query parameters
+    if (queryParams.is_active !== undefined) {
+      query = query.eq("is_active", queryParams.is_active === "true")
+    }
+
+    // Aplicar paginación
+    const { data: configurations, error } = await query
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true })
+      .range(queryParams.offset, queryParams.offset + queryParams.limit - 1)
 
     if (error) {
       console.error("[API] Error fetching configurations:", error)
@@ -73,7 +116,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       data: configurations || [],
-      count: configurations?.length || 0
+      count: configurations?.length || 0,
+      pagination: {
+        limit: queryParams.limit,
+        offset: queryParams.offset,
+        hasMore: configurations?.length === queryParams.limit
+      }
     })
 
   } catch (error) {
@@ -114,27 +162,35 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Parsear datos del request
-    const body = await request.json()
-    const { name, description, icon, color, sort_order } = body
-
-    // Validaciones
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: "El nombre es requerido" }, { status: 400 })
+    // Validar body del request
+    let validatedData
+    try {
+      const body = await request.json()
+      validatedData = validateRequestBody(CreateConfigurationTypeSchema, body)
+    } catch (error) {
+      const clientInfo = getClientInfo(request)
+      return NextResponse.json(createValidationErrorResponse(error as any, {
+        ip: clientInfo.ip,
+        userAgent: clientInfo.userAgent,
+        endpoint: '/api/configurations',
+        payload: await request.json().catch(() => ({}))
+      }), { status: 400 })
     }
 
-    if (name.length > 100) {
-      return NextResponse.json({ error: "El nombre no puede exceder 100 caracteres" }, { status: 400 })
-    }
-
-    if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
-      return NextResponse.json({ error: "El color debe ser un código hexadecimal válido" }, { status: 400 })
+    // Validar headers de tenant (para admins)
+    let tenantHeaders
+    try {
+      tenantHeaders = validateHeaders(TenantHeaderSchema, {
+        'x-tenant-id': request.headers.get('x-tenant-id') || undefined
+      })
+    } catch (error) {
+      return NextResponse.json(createValidationErrorResponse(error as any), { status: 400 })
     }
 
     // Si es admin, obtener el tenant del header o query param
     let tenant_id = profile.tenant_id
     if (profile.is_admin) {
-      const selectedTenantId = request.headers.get('x-tenant-id') || 
+      const selectedTenantId = tenantHeaders['x-tenant-id'] || 
                                request.nextUrl.searchParams.get('tenant_id')
       if (selectedTenantId) {
         tenant_id = selectedTenantId
@@ -142,17 +198,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear configuración real en la base de datos
-    
     const { data: configuration, error } = await supabase
       .from("configuration_types")
       .insert({
         tenant_id,
-        name: name.trim(),
-        description: description?.trim() || null,
-        icon: icon?.trim() || null,
-        color: color || null,
-        sort_order: sort_order || 0,
-        is_active: true
+        name: validatedData.name,
+        description: validatedData.description || null,
+        icon: validatedData.icon,
+        color: validatedData.color,
+        sort_order: validatedData.sort_order,
+        is_active: validatedData.is_active
       })
       .select(`
         id,
@@ -178,6 +233,18 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({ error: "Error al crear configuración" }, { status: 500 })
     }
+
+    // Logear evento de auditoría
+    auditLogger.resourceCreated({
+      userId: user.id,
+      resourceType: 'configuration_type',
+      resourceId: configuration.id,
+      details: {
+        name: configuration.name,
+        tenant_id: tenant_id,
+        created_at: configuration.created_at
+      }
+    })
 
     return NextResponse.json({ 
       success: true, 
