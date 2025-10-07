@@ -36,9 +36,9 @@ import type {
 const configurationTypeSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(100, "El nombre no puede exceder 100 caracteres"),
   description: z.string().optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  sort_order: z.number().min(0).default(0),
+  icon: z.string().min(1, "El icono es requerido").max(50, "El icono no puede exceder 50 caracteres"),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Color debe ser un código hexadecimal válido (ej: #3B82F6)"),
+  sort_order: z.number().min(0).max(999).default(0),
   is_active: z.boolean().default(true),
 })
 
@@ -66,8 +66,8 @@ export function ConfigurationTypeForm({
     defaultValues: {
       name: configuration?.name || "",
       description: configuration?.description || "",
-      icon: configuration?.icon || "",
-      color: configuration?.color || "",
+      icon: configuration?.icon || "settings",
+      color: configuration?.color || "#3B82F6",
       sort_order: configuration?.sort_order || 0,
       is_active: configuration?.is_active ?? true,
     },

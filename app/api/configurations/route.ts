@@ -92,7 +92,14 @@ export async function GET(request: NextRequest) {
         updated_at,
         tenant_id
       `)
-      .eq("tenant_id", tenantId)
+
+    // Solo filtrar por tenant_id si no es null
+    if (tenantId) {
+      query = query.eq("tenant_id", tenantId)
+    } else {
+      // Si no hay tenant_id, filtrar por registros que tampoco tengan tenant_id
+      query = query.is("tenant_id", null)
+    }
 
     // Aplicar filtros de query parameters
     if (queryParams.is_active !== undefined) {
@@ -164,17 +171,29 @@ export async function POST(request: NextRequest) {
 
     // Validar body del request
     let validatedData
+    let requestBody
     try {
-      const body = await request.json()
-      validatedData = validateRequestBody(CreateConfigurationTypeSchema, body)
+      requestBody = await request.json()
+      validatedData = validateRequestBody(CreateConfigurationTypeSchema, requestBody)
     } catch (error) {
       const clientInfo = getClientInfo(request)
-      return NextResponse.json(createValidationErrorResponse(error as any, {
-        ip: clientInfo.ip,
-        userAgent: clientInfo.userAgent,
-        endpoint: '/api/configurations',
-        payload: await request.json().catch(() => ({}))
-      }), { status: 400 })
+      
+      // Verificar si es un ZodError
+      if (error && typeof error === 'object' && 'errors' in error) {
+        return NextResponse.json(createValidationErrorResponse(error as any, {
+          ip: clientInfo.ip,
+          userAgent: clientInfo.userAgent,
+          endpoint: '/api/configurations',
+          payload: requestBody || {}
+        }), { status: 400 })
+      } else {
+        // Si no es un ZodError, crear una respuesta de error genérica
+        return NextResponse.json({
+          success: false,
+          error: 'Datos de entrada inválidos',
+          details: error instanceof Error ? error.message : 'Error desconocido'
+        }, { status: 400 })
+      }
     }
 
     // Validar headers de tenant (para admins)

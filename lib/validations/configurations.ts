@@ -224,6 +224,15 @@ export function createValidationErrorResponse(errors: z.ZodError, context?: {
   endpoint?: string
   payload?: any
 }) {
+  // Verificar que errors tiene la estructura esperada
+  if (!errors || !errors.errors || !Array.isArray(errors.errors)) {
+    return {
+      success: false,
+      error: 'Error de validación',
+      details: 'Estructura de error inválida'
+    }
+  }
+
   const formattedErrors = errors.errors.map(error => ({
     field: error.path.join('.'),
     message: error.message,

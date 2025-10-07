@@ -54,8 +54,7 @@ export function useConfigurations() {
   const createConfiguration = useCallback(async (data: CreateConfigurationTypeRequest) => {
     try {
       const requestData = {
-        ...data,
-        ...(isAdmin && currentTenant ? { tenant_id: currentTenant.id } : {})
+        ...data
       }
 
       // Agregar header con tenant seleccionado si existe

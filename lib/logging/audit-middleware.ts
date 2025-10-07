@@ -323,8 +323,5 @@ export function requiresAuditLogging(pathname: string, config: AuditConfig = def
 }
 
 // ============================================================================
-// EXPORTAR
+// FIN DEL ARCHIVO
 // ============================================================================
-
-// Las funciones ya están exportadas individualmente arriba
-// No necesitamos re-exportarlas aquí
