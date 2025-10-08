@@ -356,6 +356,132 @@ export function isSafeUrl(input: string): boolean {
 }
 
 // ============================================================================
+// SANITIZACIÓN ESPECÍFICA PARA PERSONAS
+// ============================================================================
+
+/**
+ * Sanitiza un nombre de persona (física o jurídica)
+ */
+export function sanitizePersonName(name: string): string {
+  if (!name || typeof name !== 'string') {
+    return ''
+  }
+  
+  // Sanitizar con DOMPurify
+  let sanitized = DOMPurify.sanitize(name, DOMPURIFY_CONFIG)
+  
+  // Remover caracteres especiales peligrosos pero mantener acentos y espacios
+  sanitized = sanitized.replace(/[<>\"'&]/g, '')
+  
+  // Normalizar espacios
+  sanitized = sanitized.replace(/\s+/g, ' ').trim()
+  
+  // Limitar longitud
+  if (sanitized.length > 200) {
+    sanitized = sanitized.substring(0, 200).trim()
+  }
+  
+  return sanitized
+}
+
+/**
+ * Sanitiza un número de identificación (DNI, CIF, NIE, Pasaporte)
+ */
+export function sanitizeIdentificationNumber(idNumber: string): string {
+  if (!idNumber || typeof idNumber !== 'string') {
+    return ''
+  }
+  
+  // Sanitizar con DOMPurify
+  let sanitized = DOMPurify.sanitize(idNumber, DOMPURIFY_CONFIG)
+  
+  // Convertir a mayúsculas para consistencia
+  sanitized = sanitized.toUpperCase()
+  
+  // Remover caracteres peligrosos pero mantener letras, números y guiones
+  sanitized = sanitized.replace(/[^A-Z0-9\-]/g, '')
+  
+  // Limitar longitud
+  if (sanitized.length > 50) {
+    sanitized = sanitized.substring(0, 50)
+  }
+  
+  return sanitized
+}
+
+/**
+ * Sanitiza un número de teléfono
+ */
+export function sanitizePhoneNumber(phone: string): string {
+  if (!phone || typeof phone !== 'string') {
+    return ''
+  }
+  
+  // Sanitizar con DOMPurify
+  let sanitized = DOMPurify.sanitize(phone, DOMPURIFY_CONFIG)
+  
+  // Remover caracteres peligrosos pero mantener números, espacios, guiones, paréntesis y +
+  sanitized = sanitized.replace(/[^0-9\s\-\(\)\+]/g, '')
+  
+  // Normalizar espacios
+  sanitized = sanitized.replace(/\s+/g, ' ').trim()
+  
+  // Limitar longitud
+  if (sanitized.length > 20) {
+    sanitized = sanitized.substring(0, 20).trim()
+  }
+  
+  return sanitized
+}
+
+/**
+ * Sanitiza una dirección
+ */
+export function sanitizeAddress(address: string): string {
+  if (!address || typeof address !== 'string') {
+    return ''
+  }
+  
+  // Sanitizar con DOMPurify
+  let sanitized = DOMPurify.sanitize(address, DOMPURIFY_CONFIG)
+  
+  // Remover caracteres peligrosos pero mantener letras, números, espacios, acentos y algunos símbolos
+  sanitized = sanitized.replace(/[<>\"'&]/g, '')
+  
+  // Normalizar espacios
+  sanitized = sanitized.replace(/\s+/g, ' ').trim()
+  
+  // Limitar longitud
+  if (sanitized.length > 200) {
+    sanitized = sanitized.substring(0, 200).trim()
+  }
+  
+  return sanitized
+}
+
+/**
+ * Sanitiza un código postal
+ */
+export function sanitizePostalCode(postalCode: string): string {
+  if (!postalCode || typeof postalCode !== 'string') {
+    return ''
+  }
+  
+  // Sanitizar con DOMPurify
+  let sanitized = DOMPurify.sanitize(postalCode, DOMPURIFY_CONFIG)
+  
+  // Solo permitir números
+  sanitized = sanitized.replace(/[^0-9]/g, '')
+  
+  // Limitar a 10 caracteres
+  if (sanitized.length > 10) {
+    sanitized = sanitized.substring(0, 10)
+  }
+  
+  return sanitized
+}
+
+// ============================================================================
 // FUNCIONES HELPER
 // ============================================================================
 

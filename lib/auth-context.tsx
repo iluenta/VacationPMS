@@ -125,9 +125,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setAvailableTenants(tenantsData || [])
 
-    // Si es admin y no hay tenant seleccionado, seleccionar el primero
+    // Si es admin y no hay tenant seleccionado, seleccionar el primero que tenga personas
     if (profile?.is_admin && !selectedTenant && tenantsData && tenantsData.length > 0) {
-      setSelectedTenant(tenantsData[0])
+      // Priorizar tenants con datos: veratespera, Demo Tenant, Atalanta
+      const tenantWithData = tenantsData.find(t => 
+        t.id === '00000001-0000-4000-8000-000000000000' || // veratespera (2 personas)
+        t.id === '00000000-0000-0000-0000-000000000001' || // Demo Tenant (2 personas)
+        t.id === '00000002-0000-4000-8000-000000000000'    // Atalanta (1 persona)
+      ) || tenantsData[0] // Fallback al primero si no hay ninguno con datos
+      
+      setSelectedTenant(tenantWithData)
     }
   }
 

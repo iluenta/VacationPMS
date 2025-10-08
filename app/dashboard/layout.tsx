@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Building2, User, LogOut, Settings, Key, ChevronDown, Cog, LayoutDashboard, Home } from "lucide-react"
+import { Building2, User, LogOut, Settings, Key, ChevronDown, Cog, LayoutDashboard, Home, Users } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect } from "react"
@@ -176,6 +176,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <Home className="h-4 w-4" />
             <span>Dashboard</span>
+          </Link>
+          <Link
+            href="/dashboard/persons"
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              pathname === "/dashboard/persons"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span>Personas</span>
           </Link>
           <Link
             href="/dashboard/configurations"

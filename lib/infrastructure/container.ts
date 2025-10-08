@@ -1,12 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
-import { UserRepository } from '../domain/interfaces/UserRepository'
-import { ConfigurationRepository } from '../domain/interfaces/ConfigurationRepository'
-import { ConfigurationValueRepository } from '../domain/interfaces/ConfigurationValueRepository'
-import { TenantRepository } from '../domain/interfaces/TenantRepository'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { IUserRepository } from '../domain/interfaces/UserRepository'
+import { IConfigurationRepository } from '../domain/interfaces/ConfigurationRepository'
+import { IConfigurationValueRepository } from '../domain/interfaces/ConfigurationValueRepository'
+import { ITenantRepository } from '../domain/interfaces/TenantRepository'
+import { IPersonRepository } from '../domain/interfaces/PersonRepository'
+import { IContactInfoRepository } from '../domain/interfaces/ContactInfoRepository'
+import { IFiscalAddressRepository } from '../domain/interfaces/FiscalAddressRepository'
 import { SupabaseUserRepository } from './repositories/SupabaseUserRepository'
 import { SupabaseConfigurationRepository } from './repositories/SupabaseConfigurationRepository'
 import { SupabaseConfigurationValueRepository } from './repositories/SupabaseConfigurationValueRepository'
 import { SupabaseTenantRepository } from './repositories/SupabaseTenantRepository'
+import { SupabasePersonRepository } from './repositories/SupabasePersonRepository'
+import { SupabaseContactInfoRepository } from './repositories/SupabaseContactInfoRepository'
+import { SupabaseFiscalAddressRepository } from './repositories/SupabaseFiscalAddressRepository'
 
 /**
  * Dependency Injection Container
@@ -64,8 +70,9 @@ const container = new DIContainer()
  */
 export function configureContainer(): Container {
   // Registrar Supabase client como singleton
+  // Usar createAdminClient para bypasear RLS en repositorios
   container.registerSingleton('SupabaseClient', async () => {
-    return await createClient()
+    return await createAdminClient()
   })
 
   // Registrar repositorios como singletons
@@ -89,6 +96,21 @@ export function configureContainer(): Container {
     return new SupabaseConfigurationValueRepository(supabase)
   })
 
+  container.registerSingleton('PersonRepository', async () => {
+    const supabase = await container.get<Promise<any>>('SupabaseClient')
+    return new SupabasePersonRepository(supabase)
+  })
+
+  container.registerSingleton('ContactInfoRepository', async () => {
+    const supabase = await container.get<Promise<any>>('SupabaseClient')
+    return new SupabaseContactInfoRepository(supabase)
+  })
+
+  container.registerSingleton('FiscalAddressRepository', async () => {
+    const supabase = await container.get<Promise<any>>('SupabaseClient')
+    return new SupabaseFiscalAddressRepository(supabase)
+  })
+
   return container
 }
 
@@ -110,20 +132,32 @@ export async function getService<T>(key: string): Promise<T> {
 /**
  * Helper para obtener repositorios
  */
-export async function getUserRepository(): Promise<UserRepository> {
-  return await getService<UserRepository>('UserRepository')
+export async function getUserRepository(): Promise<IUserRepository> {
+  return await getService<IUserRepository>('UserRepository')
 }
 
-export async function getConfigurationRepository(): Promise<ConfigurationRepository> {
-  return await getService<ConfigurationRepository>('ConfigurationRepository')
+export async function getConfigurationRepository(): Promise<IConfigurationRepository> {
+  return await getService<IConfigurationRepository>('ConfigurationRepository')
 }
 
-export async function getTenantRepository(): Promise<TenantRepository> {
-  return await getService<TenantRepository>('TenantRepository')
+export async function getTenantRepository(): Promise<ITenantRepository> {
+  return await getService<ITenantRepository>('TenantRepository')
 }
 
-export async function getConfigurationValueRepository(): Promise<ConfigurationValueRepository> {
-  return await getService<ConfigurationValueRepository>('ConfigurationValueRepository')
+export async function getConfigurationValueRepository(): Promise<IConfigurationValueRepository> {
+  return await getService<IConfigurationValueRepository>('ConfigurationValueRepository')
+}
+
+export async function getPersonRepository(): Promise<IPersonRepository> {
+  return await getService<IPersonRepository>('PersonRepository')
+}
+
+export async function getContactInfoRepository(): Promise<IContactInfoRepository> {
+  return await getService<IContactInfoRepository>('ContactInfoRepository')
+}
+
+export async function getFiscalAddressRepository(): Promise<IFiscalAddressRepository> {
+  return await getService<IFiscalAddressRepository>('FiscalAddressRepository')
 }
 
 // Configurar el container al importar el módulo
