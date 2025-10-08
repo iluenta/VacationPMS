@@ -40,25 +40,26 @@ export class SupabasePersonRepository implements IPersonRepository {
       .select('*')
       .eq('tenant_id', tenantId.getValue())
 
-    // ⚠️ FILTROS TEMPORALMENTE DESACTIVADOS PARA DEBUG
-    // if (filters?.name) {
-    //   query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
-    // }
+    // Aplicar filtros
+    if (filters?.name) {
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+    }
 
-    // if (filters?.identificationNumber) {
-    //   query = query.ilike('identification_number', `%${filters.identificationNumber}%`)
-    // }
+    if (filters?.identificationNumber) {
+      query = query.ilike('identification_number', `%${filters.identificationNumber}%`)
+    }
 
-    // if (filters?.personTypeId) {
-    //   query = query.eq('person_type_id', filters.personTypeId)
-    // }
+    if (filters?.personTypeId) {
+      query = query.eq('person_type_id', filters.personTypeId)
+    }
 
-    // if (filters?.isActive !== undefined) {
-    //   query = query.eq('is_active', filters.isActive)
-    // }
+    if (filters?.isActive !== undefined) {
+      query = query.eq('is_active', filters.isActive)
+    }
 
-    // Ordenar por created_at (más simple)
-    query = query.order('created_at', { ascending: false })
+    // Ordenar por nombre (first_name para físicos, business_name para legales)
+    query = query.order('first_name', { ascending: true, nullsFirst: false })
+                 .order('business_name', { ascending: true, nullsFirst: false })
 
     // Aplicar paginación
     if (filters?.limit) {
@@ -110,22 +111,22 @@ export class SupabasePersonRepository implements IPersonRepository {
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId.getValue())
 
-    // ⚠️ FILTROS TEMPORALMENTE DESACTIVADOS PARA DEBUG
-    // if (filters?.name) {
-    //   query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
-    // }
+    // Aplicar los mismos filtros que en findByTenant
+    if (filters?.name) {
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+    }
 
-    // if (filters?.identificationNumber) {
-    //   query = query.ilike('identification_number', `%${filters.identificationNumber}%`)
-    // }
+    if (filters?.identificationNumber) {
+      query = query.ilike('identification_number', `%${filters.identificationNumber}%`)
+    }
 
-    // if (filters?.personTypeId) {
-    //   query = query.eq('person_type_id', filters.personTypeId)
-    // }
+    if (filters?.personTypeId) {
+      query = query.eq('person_type_id', filters.personTypeId)
+    }
 
-    // if (filters?.isActive !== undefined) {
-    //   query = query.eq('is_active', filters.isActive)
-    // }
+    if (filters?.isActive !== undefined) {
+      query = query.eq('is_active', filters.isActive)
+    }
 
     const { count, error } = await query
 
