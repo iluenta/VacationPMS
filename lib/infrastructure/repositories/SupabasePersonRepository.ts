@@ -39,7 +39,7 @@ export class SupabasePersonRepository implements IPersonRepository {
       .from('persons')
       .select(`
         *,
-        contact_info!left(
+        person_contact_infos!left(
           id,
           contact_name,
           phone,
@@ -50,11 +50,11 @@ export class SupabasePersonRepository implements IPersonRepository {
         )
       `)
       .eq('tenant_id', tenantId.getValue())
-      .eq('contact_info.is_primary', true)
+      .eq('person_contact_infos.is_primary', true)
 
     // Aplicar filtros
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,contact_info.phone.ilike.%${filters.name}%,contact_info.email.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,person_contact_infos.phone.ilike.%${filters.name}%,person_contact_infos.email.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -125,7 +125,7 @@ export class SupabasePersonRepository implements IPersonRepository {
 
     // Aplicar los mismos filtros que en findByTenant
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,contact_info.phone.ilike.%${filters.name}%,contact_info.email.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,person_contact_infos.phone.ilike.%${filters.name}%,person_contact_infos.email.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -256,8 +256,8 @@ export class SupabasePersonRepository implements IPersonRepository {
     const person = this.mapToEntity(data)
     
     // Añadir información del contacto principal al objeto para uso posterior
-    if (data.contact_info && data.contact_info.length > 0) {
-      const primaryContact = data.contact_info[0]
+    if (data.person_contact_infos && data.person_contact_infos.length > 0) {
+      const primaryContact = data.person_contact_infos[0]
       ;(person as any).primaryContact = {
         id: primaryContact.id,
         contactName: primaryContact.contact_name,

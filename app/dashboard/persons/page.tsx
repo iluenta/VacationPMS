@@ -54,7 +54,7 @@ export default function PersonsPage() {
   const [showContactDialog, setShowContactDialog] = useState(false)
   const [showAddressDialog, setShowAddressDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedPersonType, setSelectedPersonType] = useState<string>('')
+  const [selectedPersonType, setSelectedPersonType] = useState<string>('all')
   const [personForContact, setPersonForContact] = useState<Person | null>(null)
   const [personForAddress, setPersonForAddress] = useState<Person | null>(null)
 
@@ -84,7 +84,7 @@ export default function PersonsPage() {
         filters.name = query
       }
       
-      if (selectedPersonType) {
+      if (selectedPersonType && selectedPersonType !== 'all') {
         filters.personTypeId = selectedPersonType
       }
 
@@ -324,7 +324,7 @@ export default function PersonsPage() {
                 </Button>
                 <Button variant="outline" onClick={() => {
                   setSearchQuery('')
-                  setSelectedPersonType('')
+                  setSelectedPersonType('all')
                   fetchPersons({ limit: 50, offset: 0 })
                 }}>
                   Limpiar
@@ -338,7 +338,7 @@ export default function PersonsPage() {
                       <SelectValue placeholder="Filtrar por tipo de persona" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los tipos</SelectItem>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
                       {personTypesOptions.map((type) => (
                         <SelectItem key={type.id} value={type.id}>
                           {type.name}
