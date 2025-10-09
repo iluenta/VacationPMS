@@ -54,7 +54,7 @@ export class SupabasePersonRepository implements IPersonRepository {
 
     // Aplicar filtros
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,person_contact_infos.phone.ilike.%${filters.name}%,person_contact_infos.email.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -125,7 +125,7 @@ export class SupabasePersonRepository implements IPersonRepository {
 
     // Aplicar los mismos filtros que en findByTenant
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,person_contact_infos.phone.ilike.%${filters.name}%,person_contact_infos.email.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
