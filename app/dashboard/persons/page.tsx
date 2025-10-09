@@ -333,17 +333,7 @@ export default function PersonsPage() {
                     </div>
                   )}
                 </div>
-                <Button variant="outline" onClick={() => {
-                  setSearchQuery('')
-                  setSelectedPersonType('all')
-                }}>
-                  <X className="mr-2 h-4 w-4" />
-                  Limpiar
-                </Button>
-              </div>
-              
-              <div className="flex gap-4">
-                <div className="w-64">
+                <div className="w-80">
                   <Select value={selectedPersonType} onValueChange={setSelectedPersonType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Filtrar por tipo de persona" />
@@ -358,6 +348,13 @@ export default function PersonsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <Button variant="outline" onClick={() => {
+                  setSearchQuery('')
+                  setSelectedPersonType('all')
+                }}>
+                  <X className="mr-2 h-4 w-4" />
+                  Limpiar
+                </Button>
               </div>
             </div>
           </CardContent>
