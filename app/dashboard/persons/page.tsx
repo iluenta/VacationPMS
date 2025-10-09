@@ -14,7 +14,7 @@ import { ContactInfoForm } from '@/components/persons/contact-info-form'
 import { FiscalAddressForm } from '@/components/persons/fiscal-address-form'
 import { usePersons, Person, CreatePersonRequest, CreateContactInfoRequest, CreateFiscalAddressRequest } from '@/lib/hooks/use-persons'
 import { useConfigurations } from '@/lib/hooks/use-configurations'
-import { Plus, Search, Users, AlertCircle, Filter } from 'lucide-react'
+import { Plus, Search, Users, AlertCircle, Filter, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 
@@ -57,11 +57,22 @@ export default function PersonsPage() {
   const [selectedPersonType, setSelectedPersonType] = useState<string>('all')
   const [personForContact, setPersonForContact] = useState<Person | null>(null)
   const [personForAddress, setPersonForAddress] = useState<Person | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   // Cargar datos iniciales
   useEffect(() => {
     loadData()
   }, [])
+
+  // Búsqueda automática con debounce
+  useEffect(() => {
+    setIsSearching(true)
+    const timeoutId = setTimeout(() => {
+      handleSearch()
+    }, 300) // 300ms de debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, selectedPersonType])
 
   const loadData = async () => {
     try {
@@ -91,6 +102,8 @@ export default function PersonsPage() {
       await fetchPersons(filters)
     } catch (error) {
       console.error('Error searching persons:', error)
+    } finally {
+      setIsSearching(false)
     }
   }
 
@@ -301,32 +314,30 @@ export default function PersonsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Buscar Personas</CardTitle>
-            <CardDescription>Filtra por nombre, razón social, número de identificación, teléfono o email</CardDescription>
+            <CardDescription>Búsqueda en tiempo real por nombre, razón social, identificación, teléfono o email</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex gap-4">
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nombre, identificación, teléfono o email..."
+                    placeholder="Escribe para buscar..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch()
-                      }
-                    }}
+                    className="pl-10"
                   />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    </div>
+                  )}
                 </div>
-                <Button onClick={handleSearch}>
-                  <Search className="mr-2 h-4 w-4" />
-                  Buscar
-                </Button>
                 <Button variant="outline" onClick={() => {
                   setSearchQuery('')
                   setSelectedPersonType('all')
-                  fetchPersons({ limit: 50, offset: 0 })
                 }}>
+                  <X className="mr-2 h-4 w-4" />
                   Limpiar
                 </Button>
               </div>
