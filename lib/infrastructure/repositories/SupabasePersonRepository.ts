@@ -53,11 +53,10 @@ export class SupabasePersonRepository implements IPersonRepository {
       .eq('person_contact_infos.is_primary', true)
 
     // Aplicar filtros
-    // Filtro de búsqueda general: nombre, razón social o identificación
-    if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
-    }
-
+    // NOTA: El filtro 'name' se aplica en post-procesamiento para incluir teléfono y email
+    // No aplicamos filtro aquí para 'name' porque necesitamos obtener TODOS los registros
+    // y luego filtrar en memoria incluyendo los campos de la tabla relacionada
+    
     if (filters?.identificationNumber) {
       query = query.ilike('identification_number', `%${filters.identificationNumber}%`)
     }
