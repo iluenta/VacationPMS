@@ -42,8 +42,8 @@ describe('GetPersonsUseCase', () => {
       mockUserId,
       'test@example.com',
       'Test User',
+      mockTenantId, // tenantId is 4th parameter
       true, // isAdmin
-      mockTenantId,
       true,
       new Date(),
       new Date()
@@ -100,8 +100,8 @@ describe('GetPersonsUseCase', () => {
         mockUserId,
         'test@example.com',
         'Test User',
+        mockTenantId, // tenantId is 4th parameter
         false, // NOT admin
-        mockTenantId,
         true,
         new Date(),
         new Date()
@@ -110,6 +110,8 @@ describe('GetPersonsUseCase', () => {
       const differentTenantId = TenantId.fromString('00000002-0000-4000-8000-000000000000')
 
       mockUserRepository.findById.mockResolvedValue(nonAdminUser)
+      mockPersonRepository.findByTenant.mockResolvedValue([])
+      mockPersonRepository.countByTenant.mockResolvedValue(0)
 
       // Act & Assert
       await expect(useCase.execute({

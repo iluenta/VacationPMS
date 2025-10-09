@@ -26,7 +26,6 @@ describe('CreatePersonUseCase', () => {
       findByIdentification: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
-      findByIdentification: jest.fn(),
       countByTenant: jest.fn()
     } as any
 
@@ -60,8 +59,8 @@ describe('CreatePersonUseCase', () => {
       mockUserId,
       'test@example.com',
       'Test User',
+      mockTenantId, // tenantId is 4th parameter
       true, // isAdmin
-      mockTenantId,
       true,
       new Date(),
       new Date()
@@ -246,8 +245,8 @@ describe('CreatePersonUseCase', () => {
         mockUserId,
         'test@example.com',
         'Test User',
+        mockTenantId, // tenantId is 4th parameter
         false, // NOT admin
-        mockTenantId,
         true,
         new Date(),
         new Date()
@@ -255,7 +254,22 @@ describe('CreatePersonUseCase', () => {
 
       const differentTenantId = TenantId.fromString('00000002-0000-4000-8000-000000000000')
 
+      const mockConfiguration = {
+        id: mockPersonTypeId,
+        tenantId: differentTenantId,
+        name: 'Cliente',
+        description: 'Tipo de cliente',
+        icon: 'person',
+        color: '#FF0000',
+        sortOrder: 1,
+        isActive: true,
+        belongsToTenant: jest.fn().mockReturnValue(true)
+      } as any
+
       mockUserRepository.findById.mockResolvedValue(nonAdminUser)
+      mockConfigurationRepository.findById.mockResolvedValue(mockConfiguration)
+      mockPersonRepository.findByIdentification.mockResolvedValue(false)
+      mockPersonRepository.save.mockResolvedValue(null) // Will not be called due to error
 
       // Act & Assert
       await expect(useCase.execute({

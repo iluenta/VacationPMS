@@ -1,5 +1,6 @@
 import { IPersonRepository } from '../../domain/interfaces/PersonRepository'
 import { IUserRepository } from '../../domain/interfaces/UserRepository'
+import { IConfigurationRepository } from '../../domain/interfaces/ConfigurationRepository'
 import { PersonDto, CreatePersonDto } from '../dto/PersonDto'
 import { Person } from '../../domain/entities/Person'
 import { TenantId } from '../../domain/value-objects/TenantId'
@@ -15,7 +16,8 @@ export interface CreatePersonRequest {
 export class CreatePersonUseCase {
   constructor(
     private readonly personRepository: IPersonRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly configurationRepository: IConfigurationRepository
   ) {}
 
   async execute(request: CreatePersonRequest): Promise<PersonDto> {
