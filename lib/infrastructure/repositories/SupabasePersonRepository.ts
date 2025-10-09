@@ -53,8 +53,9 @@ export class SupabasePersonRepository implements IPersonRepository {
       .eq('person_contact_infos.is_primary', true)
 
     // Aplicar filtros
+    // Filtro de búsqueda general: nombre, razón social o identificación
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -114,7 +115,37 @@ export class SupabasePersonRepository implements IPersonRepository {
     }
 
     console.log('✅ [REPOSITORY] Returning', data.length, 'persons')
-    return data.map((row: any) => this.mapToEntityWithContact(row))
+    
+    // Mapear a entidades
+    let persons = data.map((row: any) => this.mapToEntityWithContact(row))
+    
+    // Filtro adicional por teléfono o email (post-procesamiento)
+    // Ya que Supabase no permite filtrar campos de tablas relacionadas en .or()
+    if (filters?.name) {
+      const searchTerm = filters.name.toLowerCase()
+      persons = persons.filter((person: any) => {
+        // Si ya coincide con los filtros de la BD (nombre, apellido, razón social, identificación), mantenerlo
+        const matchesBasicFields = 
+          person.getFirstName()?.toLowerCase().includes(searchTerm) ||
+          person.getLastName()?.toLowerCase().includes(searchTerm) ||
+          person.getBusinessName()?.toLowerCase().includes(searchTerm) ||
+          person.getIdentificationNumber()?.toLowerCase().includes(searchTerm)
+        
+        if (matchesBasicFields) return true
+        
+        // Si no, verificar teléfono y email del contacto principal
+        const primaryContact = (person as any).primaryContact
+        if (primaryContact) {
+          const matchesPhone = primaryContact.phone?.toLowerCase().includes(searchTerm)
+          const matchesEmail = primaryContact.email?.toLowerCase().includes(searchTerm)
+          return matchesPhone || matchesEmail
+        }
+        
+        return false
+      })
+    }
+    
+    return persons
   }
 
   async countByTenant(tenantId: TenantId, filters?: PersonFilters): Promise<number> {
@@ -124,8 +155,10 @@ export class SupabasePersonRepository implements IPersonRepository {
       .eq('tenant_id', tenantId.getValue())
 
     // Aplicar los mismos filtros que en findByTenant
+    // Nota: El count no puede ser exacto cuando filtramos por teléfono/email en post-procesamiento
+    // pero es una aproximación aceptable
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
