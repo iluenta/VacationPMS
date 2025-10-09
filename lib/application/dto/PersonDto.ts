@@ -15,6 +15,16 @@ export interface PersonDto {
   fullName: string
   displayName: string
   identificationDisplay: string
+  // Contacto principal
+  primaryContact?: {
+    id: string
+    contactName: string
+    phone: string | null
+    email: string | null
+    position: string | null
+    isPrimary: boolean
+    isActive: boolean
+  }
 }
 
 export interface CreatePersonDto {

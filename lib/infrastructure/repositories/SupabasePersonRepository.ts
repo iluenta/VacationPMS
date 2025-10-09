@@ -37,12 +37,24 @@ export class SupabasePersonRepository implements IPersonRepository {
 
     let query = this.supabase
       .from('persons')
-      .select('*')
+      .select(`
+        *,
+        contact_info!left(
+          id,
+          contact_name,
+          phone,
+          email,
+          position,
+          is_primary,
+          is_active
+        )
+      `)
       .eq('tenant_id', tenantId.getValue())
+      .eq('contact_info.is_primary', true)
 
     // Aplicar filtros
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,contact_info.phone.ilike.%${filters.name}%,contact_info.email.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -102,7 +114,7 @@ export class SupabasePersonRepository implements IPersonRepository {
     }
 
     console.log('✅ [REPOSITORY] Returning', data.length, 'persons')
-    return data.map(this.mapToEntity)
+    return data.map((row: any) => this.mapToEntityWithContact(row))
   }
 
   async countByTenant(tenantId: TenantId, filters?: PersonFilters): Promise<number> {
@@ -113,7 +125,7 @@ export class SupabasePersonRepository implements IPersonRepository {
 
     // Aplicar los mismos filtros que en findByTenant
     if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%`)
+      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,contact_info.phone.ilike.%${filters.name}%,contact_info.email.ilike.%${filters.name}%`)
     }
 
     if (filters?.identificationNumber) {
@@ -209,7 +221,8 @@ export class SupabasePersonRepository implements IPersonRepository {
     console.log('🔄 [REPOSITORY] Mapping data to Person entity:', {
       id: data.id,
       firstName: data.first_name,
-      lastName: data.last_name
+      lastName: data.last_name,
+      hasContactInfo: !!data.contact_info
     })
     
     const person = new Person(
@@ -227,11 +240,34 @@ export class SupabasePersonRepository implements IPersonRepository {
       new Date(data.updated_at)
     )
     
+    // El contacto principal se manejará en el DTO
+    
     console.log('✅ [REPOSITORY] Person entity created:', {
       hasGetId: typeof person.getId === 'function',
       hasGetFullName: typeof person.getFullName === 'function',
-      idValue: person.getId().getValue()
+      idValue: person.getId().getValue(),
+      hasPrimaryContact: !!(person as any).primaryContact
     })
+    
+    return person
+  }
+
+  private mapToEntityWithContact(data: any): Person {
+    const person = this.mapToEntity(data)
+    
+    // Añadir información del contacto principal al objeto para uso posterior
+    if (data.contact_info && data.contact_info.length > 0) {
+      const primaryContact = data.contact_info[0]
+      ;(person as any).primaryContact = {
+        id: primaryContact.id,
+        contactName: primaryContact.contact_name,
+        phone: primaryContact.phone,
+        email: primaryContact.email,
+        position: primaryContact.position,
+        isPrimary: primaryContact.is_primary,
+        isActive: primaryContact.is_active
+      }
+    }
     
     return person
   }

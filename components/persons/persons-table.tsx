@@ -55,9 +55,10 @@ export function PersonsTable({ persons, loading, onEdit, onDelete, onView, onVie
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Categoría</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Nombre / Razón Social</TableHead>
               <TableHead>Identificación</TableHead>
+              <TableHead>Contacto Principal</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -81,6 +82,29 @@ export function PersonsTable({ persons, loading, onEdit, onDelete, onView, onVie
                   <div className="text-sm text-muted-foreground">
                     {person.identificationDisplay}
                   </div>
+                </TableCell>
+                <TableCell>
+                  {person.primaryContact ? (
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium">{person.primaryContact.contactName}</div>
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                        {person.primaryContact.phone && (
+                          <div className="flex items-center">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {person.primaryContact.phone}
+                          </div>
+                        )}
+                        {person.primaryContact.email && (
+                          <div className="flex items-center">
+                            <Mail className="h-3 w-3 mr-1" />
+                            {person.primaryContact.email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Sin contacto</div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Badge variant={person.isActive ? 'default' : 'secondary'}>

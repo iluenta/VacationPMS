@@ -103,7 +103,8 @@ export class GetPersonsUseCase {
       updatedAt: person.getUpdatedAt().toISOString(),
       fullName: person.getFullName(),
       displayName: person.getDisplayName(),
-      identificationDisplay: person.getIdentificationDisplay()
+      identificationDisplay: person.getIdentificationDisplay(),
+      primaryContact: (person as any).primaryContact || undefined
     }
   }
 }

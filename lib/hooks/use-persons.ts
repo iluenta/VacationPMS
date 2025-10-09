@@ -21,6 +21,15 @@ export interface Person {
   fullName: string
   displayName: string
   identificationDisplay: string
+  primaryContact?: {
+    id: string
+    contactName: string
+    phone: string | null
+    email: string | null
+    position: string | null
+    isPrimary: boolean
+    isActive: boolean
+  }
 }
 
 export interface ContactInfo {

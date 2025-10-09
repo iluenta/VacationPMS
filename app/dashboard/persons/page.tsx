@@ -14,7 +14,8 @@ import { ContactInfoForm } from '@/components/persons/contact-info-form'
 import { FiscalAddressForm } from '@/components/persons/fiscal-address-form'
 import { usePersons, Person, CreatePersonRequest, CreateContactInfoRequest, CreateFiscalAddressRequest } from '@/lib/hooks/use-persons'
 import { useConfigurations } from '@/lib/hooks/use-configurations'
-import { Plus, Search, Users, AlertCircle } from 'lucide-react'
+import { Plus, Search, Users, AlertCircle, Filter } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 
 export default function PersonsPage() {
@@ -53,6 +54,7 @@ export default function PersonsPage() {
   const [showContactDialog, setShowContactDialog] = useState(false)
   const [showAddressDialog, setShowAddressDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedPersonType, setSelectedPersonType] = useState<string>('')
   const [personForContact, setPersonForContact] = useState<Person | null>(null)
   const [personForAddress, setPersonForAddress] = useState<Person | null>(null)
 
@@ -76,17 +78,17 @@ export default function PersonsPage() {
   const handleSearch = async () => {
     try {
       const query = searchQuery?.trim()
-      if (!query) {
-        await fetchPersons({ limit: 50, offset: 0 })
-        return
+      const filters: any = { limit: 50, offset: 0 }
+      
+      if (query) {
+        filters.name = query
+      }
+      
+      if (selectedPersonType) {
+        filters.personTypeId = selectedPersonType
       }
 
-      // Buscar por nombre (que ahora incluye búsqueda en todos los campos)
-      await fetchPersons({
-        name: query,
-        limit: 50,
-        offset: 0
-      })
+      await fetchPersons(filters)
     } catch (error) {
       console.error('Error searching persons:', error)
     }
@@ -299,32 +301,53 @@ export default function PersonsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Buscar Personas</CardTitle>
-            <CardDescription>Filtra por nombre, razón social o número de identificación</CardDescription>
+            <CardDescription>Filtra por nombre, razón social, número de identificación, teléfono o email</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Buscar por nombre o identificación..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch()
-                    }
-                  }}
-                />
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Buscar por nombre, identificación, teléfono o email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch()
+                      }
+                    }}
+                  />
+                </div>
+                <Button onClick={handleSearch}>
+                  <Search className="mr-2 h-4 w-4" />
+                  Buscar
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setSearchQuery('')
+                  setSelectedPersonType('')
+                  fetchPersons({ limit: 50, offset: 0 })
+                }}>
+                  Limpiar
+                </Button>
               </div>
-              <Button onClick={handleSearch}>
-                <Search className="mr-2 h-4 w-4" />
-                Buscar
-              </Button>
-              <Button variant="outline" onClick={() => {
-                setSearchQuery('')
-                fetchPersons({ limit: 50, offset: 0 })
-              }}>
-                Limpiar
-              </Button>
+              
+              <div className="flex gap-4">
+                <div className="w-64">
+                  <Select value={selectedPersonType} onValueChange={setSelectedPersonType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filtrar por tipo de persona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los tipos</SelectItem>
+                      {personTypesOptions.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
