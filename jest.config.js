@@ -28,6 +28,9 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)'
+  ],
   testTimeout: 10000,
   verbose: true
 }

@@ -6,6 +6,7 @@ import { ITenantRepository } from '../domain/interfaces/TenantRepository'
 import { IPersonRepository } from '../domain/interfaces/PersonRepository'
 import { IContactInfoRepository } from '../domain/interfaces/ContactInfoRepository'
 import { IFiscalAddressRepository } from '../domain/interfaces/FiscalAddressRepository'
+import { IUserSettingsRepository } from '../domain/repositories/IUserSettingsRepository'
 import { SupabaseUserRepository } from './repositories/SupabaseUserRepository'
 import { SupabaseConfigurationRepository } from './repositories/SupabaseConfigurationRepository'
 import { SupabaseConfigurationValueRepository } from './repositories/SupabaseConfigurationValueRepository'
@@ -13,6 +14,10 @@ import { SupabaseTenantRepository } from './repositories/SupabaseTenantRepositor
 import { SupabasePersonRepository } from './repositories/SupabasePersonRepository'
 import { SupabaseContactInfoRepository } from './repositories/SupabaseContactInfoRepository'
 import { SupabaseFiscalAddressRepository } from './repositories/SupabaseFiscalAddressRepository'
+import { SupabaseUserSettingsRepository } from './repositories/SupabaseUserSettingsRepository'
+import { GetUserSettingsUseCase } from '../application/use-cases/GetUserSettingsUseCase'
+import { UpdateUserSettingsUseCase } from '../application/use-cases/UpdateUserSettingsUseCase'
+import { ChangePasswordUseCase } from '../application/use-cases/ChangePasswordUseCase'
 
 /**
  * Dependency Injection Container
@@ -111,6 +116,28 @@ export function configureContainer(): Container {
     return new SupabaseFiscalAddressRepository(supabase)
   })
 
+  container.registerSingleton('UserSettingsRepository', async () => {
+    const supabase = await container.get<Promise<any>>('SupabaseClient')
+    return new SupabaseUserSettingsRepository(supabase)
+  })
+
+  // Registrar Use Cases
+  container.registerSingleton('GetUserSettingsUseCase', async () => {
+    const userSettingsRepository = await container.get<Promise<IUserSettingsRepository>>('UserSettingsRepository')
+    return new GetUserSettingsUseCase(userSettingsRepository)
+  })
+
+  container.registerSingleton('UpdateUserSettingsUseCase', async () => {
+    const userSettingsRepository = await container.get<Promise<IUserSettingsRepository>>('UserSettingsRepository')
+    return new UpdateUserSettingsUseCase(userSettingsRepository)
+  })
+
+  container.registerSingleton('ChangePasswordUseCase', async () => {
+    const userRepository = await container.get<Promise<IUserRepository>>('UserRepository')
+    const userSettingsRepository = await container.get<Promise<IUserSettingsRepository>>('UserSettingsRepository')
+    return new ChangePasswordUseCase(userRepository, userSettingsRepository)
+  })
+
   return container
 }
 
@@ -158,6 +185,10 @@ export async function getContactInfoRepository(): Promise<IContactInfoRepository
 
 export async function getFiscalAddressRepository(): Promise<IFiscalAddressRepository> {
   return await getService<IFiscalAddressRepository>('FiscalAddressRepository')
+}
+
+export async function getUserSettingsRepository(): Promise<IUserSettingsRepository> {
+  return await getService<IUserSettingsRepository>('UserSettingsRepository')
 }
 
 // Configurar el container al importar el módulo
