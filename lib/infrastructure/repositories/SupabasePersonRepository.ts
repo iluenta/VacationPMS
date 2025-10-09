@@ -155,11 +155,8 @@ export class SupabasePersonRepository implements IPersonRepository {
       .eq('tenant_id', tenantId.getValue())
 
     // Aplicar los mismos filtros que en findByTenant
-    // Nota: El count no puede ser exacto cuando filtramos por teléfono/email en post-procesamiento
-    // pero es una aproximación aceptable
-    if (filters?.name) {
-      query = query.or(`first_name.ilike.%${filters.name}%,last_name.ilike.%${filters.name}%,business_name.ilike.%${filters.name}%,identification_number.ilike.%${filters.name}%`)
-    }
+    // NOTA: El filtro 'name' NO se aplica aquí porque se hace en post-procesamiento
+    // El count será aproximado, pero devolvemos el count de los registros filtrados en findByTenant
 
     if (filters?.identificationNumber) {
       query = query.ilike('identification_number', `%${filters.identificationNumber}%`)

@@ -70,7 +70,9 @@ export class GetPersonsUseCase {
     })
 
     // 7. Obtener total para paginación
-    const total = await this.personRepository.countByTenant(finalTenantId, filters)
+    // NOTA: Si hay filtro de 'name', el count ya está aplicado en el array filtrado
+    // porque el repositorio hace el filtrado en post-procesamiento
+    const total = filters?.name ? persons.length : await this.personRepository.countByTenant(finalTenantId, filters)
 
     console.log('🎯 [USE CASE] Count result:', total)
 
