@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { User, Mail, Phone, Briefcase } from 'lucide-react'
 import { CreateContactInfoRequest } from '@/lib/hooks/use-persons'
 
 const contactFormSchema = z.object({
@@ -59,100 +59,122 @@ export function ContactInfoForm({ onSubmit, onCancel }: ContactInfoFormProps) {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Agregar Contacto</CardTitle>
-        <CardDescription>
-          Completa los datos del nuevo contacto
-        </CardDescription>
-      </CardHeader>
-
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <CardContent className="space-y-4">
-          {/* Nombre de contacto */}
-          <div className="space-y-2">
-            <Label htmlFor="contactName">Nombre de Contacto *</Label>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        {/* Nombre de contacto */}
+        <div className="space-y-2">
+          <Label htmlFor="contactName" className="text-sm font-medium">Nombre de Contacto *</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               id="contactName"
               {...register('contactName')}
               placeholder="Juan Pérez"
+              className="pl-10"
             />
-            {errors.contactName && (
-              <p className="text-sm text-red-500">{errors.contactName.message}</p>
-            )}
           </div>
+          {errors.contactName && (
+            <p className="text-sm text-red-500">{errors.contactName.message}</p>
+          )}
+        </div>
 
-          {/* Email */}
+        {/* Email y Teléfono */}
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register('email')}
-              placeholder="juan@example.com"
-            />
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="email"
+                type="email"
+                {...register('email')}
+                placeholder="juan@example.com"
+                className="pl-10"
+              />
+            </div>
             {errors.email && (
               <p className="text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
 
-          {/* Teléfono */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              {...register('phone')}
-              placeholder="+34 600 123 456"
-            />
+            <Label htmlFor="phone" className="text-sm font-medium">Teléfono</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="phone"
+                {...register('phone')}
+                placeholder="+34 600 123 456"
+                className="pl-10"
+              />
+            </div>
             {errors.phone && (
               <p className="text-sm text-red-500">{errors.phone.message}</p>
             )}
           </div>
+        </div>
 
-          {/* Cargo */}
-          <div className="space-y-2">
-            <Label htmlFor="position">Cargo</Label>
+        {/* Cargo */}
+        <div className="space-y-2">
+          <Label htmlFor="position" className="text-sm font-medium">Cargo</Label>
+          <div className="relative">
+            <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               id="position"
               {...register('position')}
               placeholder="Director General"
+              className="pl-10"
             />
-            {errors.position && (
-              <p className="text-sm text-red-500">{errors.position.message}</p>
-            )}
           </div>
-
-          {/* Es primario */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isPrimary"
-              checked={watch('isPrimary')}
-              onCheckedChange={(checked) => setValue('isPrimary', checked as boolean)}
-            />
-            <Label htmlFor="isPrimary" className="text-sm font-normal cursor-pointer">
-              Marcar como contacto principal
-            </Label>
-          </div>
-
-          {/* Errores generales */}
-          {Object.keys(errors).length > 0 && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Por favor, corrige los errores en el formulario
-              </AlertDescription>
-            </Alert>
+          {errors.position && (
+            <p className="text-sm text-red-500">{errors.position.message}</p>
           )}
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        {/* Es primario */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="isPrimary"
+            checked={watch('isPrimary')}
+            onCheckedChange={(checked) => setValue('isPrimary', checked as boolean)}
+          />
+          <Label htmlFor="isPrimary" className="text-sm font-normal cursor-pointer">
+            Marcar como contacto principal
+          </Label>
+        </div>
+
+        {/* Errores generales */}
+        {Object.keys(errors).length > 0 && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Por favor, corrige los errores en el formulario
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700"
+          >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            variant="default"
+            style={{
+              backgroundColor: 'hsl(var(--primary))',
+              color: 'hsl(var(--primary-foreground))',
+              border: 'none'
+            }}
+          >
             {isSubmitting ? 'Guardando...' : 'Crear Contacto'}
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   )
 }

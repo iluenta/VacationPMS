@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { IconPicker } from "@/components/ui/icon-picker"
 import { ColorPicker } from "@/components/ui/color-picker"
-import { Loader2 } from "lucide-react"
+import { Loader2, Tag, Hash, FileText } from "lucide-react"
 import type { 
   ConfigurationValue, 
   CreateConfigurationValueRequest,
@@ -124,7 +124,7 @@ export function ConfigurationValueForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {value ? "Editar Valor" : "Nuevo Valor"}
@@ -138,143 +138,181 @@ export function ConfigurationValueForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="value"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ej. admin" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Valor único para este elemento (usado internamente)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Valor *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input 
+                            placeholder="ej. admin" 
+                            className="pl-10"
+                            {...field} 
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Valor único para este elemento (usado internamente)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="label"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Etiqueta *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ej. Administrador" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Etiqueta que se mostrará al usuario
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="label"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Etiqueta *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input 
+                            placeholder="ej. Administrador" 
+                            className="pl-10"
+                            {...field} 
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Etiqueta que se mostrará al usuario
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción</FormLabel>
+                      <FormLabel className="text-sm font-medium">Descripción</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Descripción opcional del valor"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icono</FormLabel>
-                  <FormControl>
-                    <IconPicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Seleccionar icono"
-                    />
-                  </FormControl>
                   <FormDescription>
-                    Icono específico para este valor
+                    Descripción opcional del valor
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <ColorPicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Seleccionar color"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Color específico para este valor
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="icon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Icono</FormLabel>
+                      <FormControl>
+                        <IconPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Seleccionar icono"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Icono específico para este valor
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="sort_order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Orden</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Orden de visualización (menor número = más arriba)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Color</FormLabel>
+                      <FormControl>
+                        <ColorPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Seleccionar color"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Color específico para este valor
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Activo</FormLabel>
-                    <FormDescription>
-                      Los valores inactivos no se mostrarán en las listas
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="sort_order"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Orden</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="0"
+                            className="pl-10"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Orden de visualización (menor número = más arriba)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="is_active"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-medium">Activo</FormLabel>
+                      <FormDescription>
+                        Los valores inactivos no se mostrarán en las listas
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-primary"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button
@@ -282,10 +320,20 @@ export function ConfigurationValueForm({
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
+                className="bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting || loading}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || loading}
+                variant="default"
+                style={{
+                  backgroundColor: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary-foreground))',
+                  border: 'none'
+                }}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

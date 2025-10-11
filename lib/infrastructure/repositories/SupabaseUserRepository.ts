@@ -180,7 +180,7 @@ export class SupabaseUserRepository implements UserRepository {
       id: data.id,
       email: data.email,
       name: data.name || data.email.split('@')[0] || 'Usuario', // Usar email como nombre por defecto
-      tenantId: data.tenant_id,
+      tenantId: data.tenant_id, // Mantener tenant_id como string, fromPlainObject lo convertirá
       isAdmin: data.is_admin || false,
       isActive: data.is_active !== false,
       createdAt: data.created_at,

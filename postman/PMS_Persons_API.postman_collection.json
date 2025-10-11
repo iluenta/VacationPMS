@@ -1,0 +1,703 @@
+{
+	"info": {
+		"_postman_id": "pms-persons-api",
+		"name": "PMS Persons API",
+		"description": "Colección de endpoints para la gestión de personas en el sistema PMS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"veratespera@gmail.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Iniciar sesión para obtener el token de autenticación"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Persons",
+			"item": [
+				{
+					"name": "Get All Persons",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2?tenant_id={{tenant_id}}&limit=50&offset=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2"
+							],
+							"query": [
+								{
+									"key": "tenant_id",
+									"value": "{{tenant_id}}"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Obtener todas las personas del tenant"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Persons with Filters",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2?tenant_id={{tenant_id}}&name={{search_name}}&personTypeId={{person_type_id}}&isActive=true&limit=50&offset=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2"
+							],
+							"query": [
+								{
+									"key": "tenant_id",
+									"value": "{{tenant_id}}"
+								},
+								{
+									"key": "name",
+									"value": "{{search_name}}",
+									"description": "Buscar por nombre, email o teléfono"
+								},
+								{
+									"key": "personTypeId",
+									"value": "{{person_type_id}}",
+									"description": "Filtrar por tipo de persona"
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Filtrar por estado activo"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Obtener personas con filtros aplicados"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Person by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}"
+							]
+						},
+						"description": "Obtener una persona específica por su ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Person",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\",\n  \"businessName\": null,\n  \"identificationType\": \"DNI\",\n  \"identificationNumber\": \"12345678A\",\n  \"personCategory\": \"PHYSICAL\",\n  \"personTypeId\": \"{{person_type_id}}\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2"
+							]
+						},
+						"description": "Crear una nueva persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Legal Person",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": null,\n  \"lastName\": null,\n  \"businessName\": \"Empresa Ejemplo S.L.\",\n  \"identificationType\": \"CIF\",\n  \"identificationNumber\": \"B12345678\",\n  \"personCategory\": \"LEGAL\",\n  \"personTypeId\": \"{{person_type_id}}\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2"
+							]
+						},
+						"description": "Crear una persona jurídica"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Person",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Juan Carlos\",\n  \"lastName\": \"Pérez García\",\n  \"businessName\": null,\n  \"identificationType\": \"DNI\",\n  \"identificationNumber\": \"12345678A\",\n  \"personCategory\": \"PHYSICAL\",\n  \"personTypeId\": \"{{person_type_id}}\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}"
+							]
+						},
+						"description": "Actualizar una persona existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Person",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}"
+							]
+						},
+						"description": "Eliminar una persona"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Person Contacts",
+			"item": [
+				{
+					"name": "Get Person Contacts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/contacts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"contacts"
+							]
+						},
+						"description": "Obtener contactos de una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Person Contact",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"contactName\": \"Juan Pérez\",\n  \"phone\": \"+34 666 123 456\",\n  \"email\": \"juan.perez@email.com\",\n  \"position\": \"Director\",\n  \"isPrimary\": true,\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/contacts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"contacts"
+							]
+						},
+						"description": "Crear un contacto para una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Person Contact",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"contactName\": \"Juan Carlos Pérez\",\n  \"phone\": \"+34 666 123 456\",\n  \"email\": \"juan.carlos.perez@email.com\",\n  \"position\": \"Director General\",\n  \"isPrimary\": true,\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/contacts/{{contact_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"contacts",
+								"{{contact_id}}"
+							]
+						},
+						"description": "Actualizar un contacto de una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Person Contact",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/contacts/{{contact_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"contacts",
+								"{{contact_id}}"
+							]
+						},
+						"description": "Eliminar un contacto de una persona"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Person Addresses",
+			"item": [
+				{
+					"name": "Get Person Address",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/address",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"address"
+							]
+						},
+						"description": "Obtener dirección fiscal de una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Person Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"street\": \"Calle Mayor, 123\",\n  \"city\": \"Madrid\",\n  \"province\": \"Madrid\",\n  \"postalCode\": \"28001\",\n  \"country\": \"España\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/address",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"address"
+							]
+						},
+						"description": "Crear dirección fiscal para una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Person Address",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"street\": \"Avenida de la Paz, 456\",\n  \"city\": \"Barcelona\",\n  \"province\": \"Barcelona\",\n  \"postalCode\": \"08001\",\n  \"country\": \"España\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/address/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"address",
+								"{{address_id}}"
+							]
+						},
+						"description": "Actualizar dirección fiscal de una persona"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Person Address",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/persons-v2/{{person_id}}/address/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"persons-v2",
+								"{{person_id}}",
+								"address",
+								"{{address_id}}"
+							]
+						},
+						"description": "Eliminar dirección fiscal de una persona"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Configuration Types",
+			"item": [
+				{
+					"name": "Get Configuration Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "x-tenant-id",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/configurations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"configurations"
+							]
+						},
+						"description": "Obtener tipos de configuración (incluye tipos de persona)"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string",
+			"description": "Token de autenticación obtenido del login"
+		},
+		{
+			"key": "tenant_id",
+			"value": "00000001-0000-4000-8000-000000000000",
+			"type": "string",
+			"description": "ID del tenant veratespera"
+		},
+		{
+			"key": "person_id",
+			"value": "",
+			"type": "string",
+			"description": "ID de una persona específica"
+		},
+		{
+			"key": "contact_id",
+			"value": "",
+			"type": "string",
+			"description": "ID de un contacto específico"
+		},
+		{
+			"key": "address_id",
+			"value": "",
+			"type": "string",
+			"description": "ID de una dirección específica"
+		},
+		{
+			"key": "person_type_id",
+			"value": "",
+			"type": "string",
+			"description": "ID del tipo de persona"
+		},
+		{
+			"key": "search_name",
+			"value": "Juan",
+			"type": "string",
+			"description": "Término de búsqueda para filtrar personas"
+		}
+	]
+}

@@ -43,10 +43,10 @@ export default function ProfilePage() {
 
   // Sincronizar configuraciones cuando se cargan
   useEffect(() => {
-    if (settings) {
-      setThemeColor(settings.language === 'es' ? 'blue' : 'blue') // Por ahora mantener azul
+    if (profile?.theme_color) {
+      setThemeColor(profile.theme_color)
     }
-  }, [settings])
+  }, [profile?.theme_color])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -264,7 +264,15 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={isUpdating}>
+                  <Button 
+                    type="submit" 
+                    disabled={isUpdating}
+                    style={{
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                      border: 'none'
+                    }}
+                  >
                     {isUpdating ? "Guardando..." : "Guardar cambios"}
                   </Button>
                 </form>
@@ -325,7 +333,15 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={isChangingPassword}>
+                  <Button 
+                    type="submit" 
+                    disabled={isChangingPassword}
+                    style={{
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                      border: 'none'
+                    }}
+                  >
                     {isChangingPassword ? "Cambiando..." : "Cambiar contraseña"}
                   </Button>
                 </form>

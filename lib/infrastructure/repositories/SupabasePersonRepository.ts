@@ -30,10 +30,6 @@ export class SupabasePersonRepository implements IPersonRepository {
   }
 
   async findByTenant(tenantId: TenantId, filters?: PersonFilters): Promise<Person[]> {
-    console.log('💾 [REPOSITORY] findByTenant called with:', {
-      tenantId: tenantId.getValue(),
-      filters
-    })
 
     let query = this.supabase
       .from('persons')
@@ -79,29 +75,7 @@ export class SupabasePersonRepository implements IPersonRepository {
       query = query.range(offset, offset + filters.limit - 1)
     }
 
-    console.log('🔍 [REPOSITORY] About to execute query with:', {
-      table: 'persons',
-      tenantId: tenantId.getValue(),
-      hasFilters: !!filters,
-      willOrder: true,
-      willRange: !!filters?.limit
-    })
-
     const { data, error } = await query
-
-    console.log('💾 [REPOSITORY] Supabase response:', {
-      hasData: !!data,
-      dataLength: data?.length || 0,
-      hasError: !!error,
-      errorMessage: error?.message,
-      errorCode: error?.code,
-      firstRow: data?.[0] ? {
-        id: data[0].id,
-        first_name: data[0].first_name,
-        last_name: data[0].last_name,
-        tenant_id: data[0].tenant_id
-      } : null
-    })
 
     if (error) {
       console.error('❌ [REPOSITORY] Database error:', error)
@@ -109,11 +83,8 @@ export class SupabasePersonRepository implements IPersonRepository {
     }
 
     if (!data) {
-      console.log('⚠️ [REPOSITORY] No data returned')
       return []
     }
-
-    console.log('✅ [REPOSITORY] Returning', data.length, 'persons')
     
     // Mapear a entidades
     let persons = data.map((row: any) => this.mapToEntityWithContact(row))

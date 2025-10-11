@@ -134,7 +134,7 @@ export function usePersons() {
   const [hasMore, setHasMore] = useState(false)
 
   // Obtener tenant_id del tenant actual (para admins usa selectedTenant, para usuarios regulares usa su tenant)
-  const tenantId = currentTenant?.id || profile?.tenant_id || '00000000-0000-0000-0000-000000000001'
+  const tenantId = currentTenant?.id || profile?.tenant_id
 
   /**
    * Fetch personas con filtros
@@ -143,6 +143,11 @@ export function usePersons() {
     try {
       setLoading(true)
       setError(null)
+
+      // Validar que tenemos un tenant
+      if (!tenantId) {
+        throw new Error('No hay tenant disponible')
+      }
 
       // Construir query params
       const params = new URLSearchParams()
@@ -157,12 +162,7 @@ export function usePersons() {
       params.append('offset', String(filters?.offset || 0))
 
       const url = `/api/persons-v2?${params.toString()}`
-      
-      console.log('📡 [FRONTEND] Fetching persons...', { url, tenantId, filters })
-      
       const response = await fetch(url)
-
-      console.log('📡 [FRONTEND] Response status:', response.status, response.statusText)
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -172,15 +172,6 @@ export function usePersons() {
 
       const result = await response.json()
       
-      console.log('📡 [FRONTEND] Response data:', {
-        success: result.success,
-        personsCount: result.persons?.length || 0,
-        total: result.total,
-        page: result.page,
-        hasMore: result.hasMore,
-        error: result.error
-      })
-      
       if (!result.success) {
         throw new Error(result.error || 'Error desconocido')
       }
@@ -189,8 +180,6 @@ export function usePersons() {
       setTotal(result.total || 0)
       setPage(result.page || 1)
       setHasMore(result.hasMore || false)
-      
-      console.log('✅ [FRONTEND] Personas cargadas:', result.persons?.length || 0)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
@@ -358,7 +347,6 @@ export function usePersons() {
    */
   const fetchContacts = useCallback(async (personId: string) => {
     try {
-      setLoading(true)
       setError(null)
 
       const response = await fetch(`/api/persons-v2/${personId}/contacts?tenant_id=${tenantId}`)
@@ -379,8 +367,6 @@ export function usePersons() {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
   }, [tenantId])
 
@@ -389,7 +375,6 @@ export function usePersons() {
    */
   const createContact = useCallback(async (personId: string, data: CreateContactInfoRequest) => {
     try {
-      setLoading(true)
       setError(null)
 
       const response = await fetch(`/api/persons-v2/${personId}/contacts`, {
@@ -419,8 +404,6 @@ export function usePersons() {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
   }, [fetchContacts])
 
@@ -429,7 +412,6 @@ export function usePersons() {
    */
   const fetchFiscalAddress = useCallback(async (personId: string) => {
     try {
-      setLoading(true)
       setError(null)
 
       const response = await fetch(`/api/persons-v2/${personId}/fiscal-address?tenant_id=${tenantId}`)
@@ -450,8 +432,6 @@ export function usePersons() {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
   }, [tenantId])
 
@@ -460,7 +440,6 @@ export function usePersons() {
    */
   const createFiscalAddress = useCallback(async (personId: string, data: CreateFiscalAddressRequest) => {
     try {
-      setLoading(true)
       setError(null)
 
       const response = await fetch(`/api/persons-v2/${personId}/fiscal-address`, {
@@ -488,12 +467,10 @@ export function usePersons() {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
   }, [currentTenant])
 
-  // Efecto para refrescar personas cuando cambia el tenant
+  // Efecto para cargar datos cuando cambia el tenant
   useEffect(() => {
     if (tenantId) {
       // Limpiar datos anteriores
@@ -506,10 +483,10 @@ export function usePersons() {
       setPage(1)
       setHasMore(false)
       
-      // Cargar personas del nuevo tenant
+      // Cargar datos del nuevo tenant
       fetchPersons({ limit: 50, offset: 0 })
     }
-  }, [tenantId, fetchPersons])
+  }, [tenantId, fetchPersons]) // Incluir fetchPersons para evitar warnings
 
   return {
     // State

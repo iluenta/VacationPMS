@@ -21,8 +21,6 @@ export function useUserSettings(): UseUserSettingsReturn {
       setLoading(true)
       setError(null)
 
-      console.log('📡 [FRONTEND] Loading user settings...')
-
       const response = await fetch('/api/user-settings', {
         method: 'GET',
         headers: {
@@ -30,19 +28,15 @@ export function useUserSettings(): UseUserSettingsReturn {
         },
       })
 
-      console.log('📡 [FRONTEND] Response status:', response.status)
-
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Failed to load user settings')
       }
 
       const data = await response.json()
-      console.log('📡 [FRONTEND] Response data:', data)
 
       if (data.success && data.data) {
         setSettings(data.data)
-        console.log('✅ [FRONTEND] User settings loaded successfully')
       } else {
         throw new Error(data.message || 'Failed to load user settings')
       }

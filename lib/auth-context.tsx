@@ -61,12 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error("[AuthContext] Error fetching profile:", profileError)
-        console.error("[AuthContext] Error details:", {
-          code: profileError.code,
-          message: profileError.message,
-          details: profileError.details,
-          hint: profileError.hint
-        })
         
         // Si el usuario no existe en public.users, esto podría ser un problema de trigger
         if (profileError.code === 'PGRST116') {
@@ -81,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("[AuthContext] Invalid profile data received:", data)
         return
       }
+
 
       setProfile(data)
 
@@ -142,25 +137,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
 
     // Get initial session with better error handling
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error("[AuthContext] Session error:", error)
-        setLoading(false)
-        return
-      }
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id).catch((err) => {
-          console.error("[AuthContext] Error fetching initial profile:", err)
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error) {
+            console.error("[AuthContext] Session error:", error)
+            setLoading(false)
+            return
+          }
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            fetchProfile(session.user.id).catch((err) => {
+              console.error("[AuthContext] Error fetching initial profile:", err)
+              setLoading(false)
+            })
+          } else {
+            setLoading(false)
+          }
+        }).catch((err) => {
+          console.error("[AuthContext] Unexpected error getting session:", err)
           setLoading(false)
         })
-      } else {
-        setLoading(false)
-      }
-    }).catch((err) => {
-      console.error("[AuthContext] Unexpected error getting session:", err)
-      setLoading(false)
-    })
 
     // Listen for auth changes with better error handling
     const {
@@ -190,10 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Cargar tenants disponibles cuando el perfil cambie y el usuario sea admin
   useEffect(() => {
-    if (profile?.is_admin) {
+    if (profile?.is_admin && availableTenants.length === 0) {
       fetchAvailableTenants()
     }
-  }, [profile?.is_admin])
+  }, [profile?.is_admin, availableTenants.length]) // Solo cargar si no hay tenants cargados
 
   const signOut = async () => {
     const supabase = createClient()

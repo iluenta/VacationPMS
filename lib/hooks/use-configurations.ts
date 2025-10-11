@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useCurrentTenant } from "./use-current-tenant"
+import { useMemoizedTenant } from "./use-memoized-tenant"
 import type { 
   ConfigurationType, 
   ConfigurationValue, 
@@ -13,7 +13,7 @@ import type {
 } from "@/types/configuration"
 
 export function useConfigurations() {
-  const { currentTenant, isAdmin } = useCurrentTenant()
+  const { currentTenant, isAdmin, tenantId } = useMemoizedTenant()
   const [configurations, setConfigurations] = useState<ConfigurationType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +48,7 @@ export function useConfigurations() {
     } finally {
       setLoading(false)
     }
-  }, [currentTenant, isAdmin])
+  }, [tenantId, isAdmin]) // Usar tenantId memoizado
 
   // Crear configuración
   const createConfiguration = useCallback(async (data: CreateConfigurationTypeRequest) => {
@@ -144,7 +144,7 @@ export function useConfigurations() {
 
     // Si hay tenant o es admin, cargar configuraciones
     fetchConfigurations()
-  }, [fetchConfigurations, currentTenant, isAdmin])
+  }, [currentTenant?.id, isAdmin]) // Solo cuando cambia el ID del tenant, no el objeto completo
 
   return {
     configurations,
@@ -162,7 +162,7 @@ export function useConfigurationValues(configurationTypeId: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Cargar valores de configuración
+  // Cargar valores de configuración - optimizado para una sola llamada
   const fetchValues = useCallback(async () => {
     if (!configurationTypeId) {
       setValues([])
@@ -173,40 +173,24 @@ export function useConfigurationValues(configurationTypeId: string | null) {
     setError(null)
 
     try {
-      // Primero, resolver el ID de configuración
-      const resolveResponse = await fetch(`/api/configurations/resolve-id/${configurationTypeId}`)
-      const resolveData = await resolveResponse.json()
-      
-      if (!resolveResponse.ok || !resolveData.data) {
-        // Error controlado - no lanzar excepción, solo establecer el estado
-        console.warn('[useConfigurationValues] No se pudo resolver el ID:', resolveData.error)
-        setError(resolveData.error || 'No se pudo resolver el ID de configuración')
-        setValues([])
-        setLoading(false)
-        return
-      }
-
-      // Luego cargar los valores con el ID resuelto
-      const response = await fetch(`/api/configurations/${resolveData.data}/values`)
+      // Una sola llamada optimizada que resuelve el ID y obtiene los valores
+      const response = await fetch(`/api/configurations/values/${configurationTypeId}`)
       const result: ApiResponse<ConfigurationValue[]> = await response.json()
 
       if (!response.ok) {
-        // Error controlado - no lanzar excepción, solo establecer el estado
         console.warn('[useConfigurationValues] Error al cargar valores:', result.error)
         setError(result.error || 'Error al cargar valores')
         setValues([])
-        setLoading(false)
         return
       }
       
       setValues(result.data || [])
-      setLoading(false)
     } catch (err) {
-      // Este catch solo captura errores de red o errores inesperados
       const errorMessage = err instanceof Error ? err.message : 'Error de conexión'
       console.error('[useConfigurationValues] Error inesperado:', err)
       setError(errorMessage)
       setValues([])
+    } finally {
       setLoading(false)
     }
   }, [configurationTypeId])

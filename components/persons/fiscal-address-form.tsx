@@ -6,8 +6,8 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { MapPin, Hash, Building, Home } from 'lucide-react'
 import { CreateFiscalAddressRequest } from '@/lib/hooks/use-persons'
 
 const fiscalAddressFormSchema = z.object({
@@ -65,98 +65,103 @@ export function FiscalAddressForm({ onSubmit, onCancel }: FiscalAddressFormProps
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Agregar Dirección Fiscal</CardTitle>
-        <CardDescription>
-          Completa los datos de la dirección fiscal
-        </CardDescription>
-      </CardHeader>
-
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <CardContent className="space-y-4">
-          {/* Calle y número */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="street">Calle *</Label>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        {/* Calle y número */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="street" className="text-sm font-medium">Calle *</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 id="street"
                 {...register('street')}
                 placeholder="Calle Mayor"
+                className="pl-10"
               />
-              {errors.street && (
-                <p className="text-sm text-red-500">{errors.street.message}</p>
-              )}
             </div>
+            {errors.street && (
+              <p className="text-sm text-red-500">{errors.street.message}</p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="number">Número</Label>
+          <div className="space-y-2">
+            <Label htmlFor="number" className="text-sm font-medium">Número</Label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 id="number"
                 {...register('number')}
                 placeholder="123"
+                className="pl-10"
               />
-              {errors.number && (
-                <p className="text-sm text-red-500">{errors.number.message}</p>
-              )}
             </div>
+            {errors.number && (
+              <p className="text-sm text-red-500">{errors.number.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Piso y puerta */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="floor">Piso</Label>
+            <Input
+              id="floor"
+              {...register('floor')}
+              placeholder="2º"
+            />
+            {errors.floor && (
+              <p className="text-sm text-red-500">{errors.floor.message}</p>
+            )}
           </div>
 
-          {/* Piso y puerta */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="floor">Piso</Label>
-              <Input
-                id="floor"
-                {...register('floor')}
-                placeholder="2º"
-              />
-              {errors.floor && (
-                <p className="text-sm text-red-500">{errors.floor.message}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="door">Puerta</Label>
+            <Input
+              id="door"
+              {...register('door')}
+              placeholder="A"
+            />
+            {errors.door && (
+              <p className="text-sm text-red-500">{errors.door.message}</p>
+            )}
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="door">Puerta</Label>
-              <Input
-                id="door"
-                {...register('door')}
-                placeholder="A"
-              />
-              {errors.door && (
-                <p className="text-sm text-red-500">{errors.door.message}</p>
-              )}
-            </div>
+        {/* Código postal y ciudad */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="postalCode">Código Postal *</Label>
+            <Input
+              id="postalCode"
+              {...register('postalCode')}
+              placeholder="28001"
+            />
+            {errors.postalCode && (
+              <p className="text-sm text-red-500">{errors.postalCode.message}</p>
+            )}
           </div>
 
-          {/* Código postal y ciudad */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="postalCode">Código Postal *</Label>
-              <Input
-                id="postalCode"
-                {...register('postalCode')}
-                placeholder="28001"
-              />
-              {errors.postalCode && (
-                <p className="text-sm text-red-500">{errors.postalCode.message}</p>
-              )}
-            </div>
-
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="city">Ciudad *</Label>
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="city" className="text-sm font-medium">Ciudad *</Label>
+            <div className="relative">
+              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 id="city"
                 {...register('city')}
                 placeholder="Madrid"
+                className="pl-10"
               />
-              {errors.city && (
-                <p className="text-sm text-red-500">{errors.city.message}</p>
-              )}
             </div>
+            {errors.city && (
+              <p className="text-sm text-red-500">{errors.city.message}</p>
+            )}
           </div>
+        </div>
 
-          {/* Provincia */}
+        {/* Provincia y País */}
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="province">Provincia</Label>
             <Input
@@ -169,7 +174,6 @@ export function FiscalAddressForm({ onSubmit, onCancel }: FiscalAddressFormProps
             )}
           </div>
 
-          {/* País */}
           <div className="space-y-2">
             <Label htmlFor="country">País</Label>
             <Input
@@ -181,26 +185,40 @@ export function FiscalAddressForm({ onSubmit, onCancel }: FiscalAddressFormProps
               <p className="text-sm text-red-500">{errors.country.message}</p>
             )}
           </div>
+        </div>
 
-          {/* Errores generales */}
-          {Object.keys(errors).length > 0 && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Por favor, corrige los errores en el formulario
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
+        {/* Errores generales */}
+        {Object.keys(errors).length > 0 && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Por favor, corrige los errores en el formulario
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <CardFooter className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700"
+          >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            variant="default"
+            style={{
+              backgroundColor: 'hsl(var(--primary))',
+              color: 'hsl(var(--primary-foreground))',
+              border: 'none'
+            }}
+          >
             {isSubmitting ? 'Guardando...' : 'Crear Dirección'}
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   )
 }

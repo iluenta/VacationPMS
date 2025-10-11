@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,7 @@ interface PersonsTableProps {
   onViewAddress: (person: Person) => void
 }
 
-export function PersonsTable({ persons, loading, onEdit, onDelete, onView, onViewContacts, onViewAddress }: PersonsTableProps) {
+export const PersonsTable = memo(function PersonsTable({ persons, loading, onEdit, onDelete, onView, onViewContacts, onViewAddress }: PersonsTableProps) {
   const [personToDelete, setPersonToDelete] = useState<Person | null>(null)
 
   const handleDeleteConfirm = () => {
@@ -178,4 +178,4 @@ export function PersonsTable({ persons, loading, onEdit, onDelete, onView, onVie
       </AlertDialog>
     </>
   )
-}
+})
